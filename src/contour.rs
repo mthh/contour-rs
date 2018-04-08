@@ -224,66 +224,74 @@ impl IsoRingBuilder {
         let end = vec![line[1][0] + x as f64, line[1][1] + y as f64];
         let start_index = self.index(&start);
         let end_index = self.index(&end);
-        let mut cfbs1 = self.fragment_by_start.clone();
-        let mut cfbe1 = self.fragment_by_end.clone();
         if self.fragment_by_end.contains_key(&start_index){
-            let f = cfbe1.get_mut(&start_index).unwrap();
-        // if let Some(f) = cfbe1.get_mut(&start_index) {
-            if let Some(g) = cfbs1.get_mut(&end_index) {
-                self.fragment_by_end.remove(&f.end);
-                self.fragment_by_start.remove(&g.start);
-                if f.end == g.end && f.start == g.start {
+            // let mut f = self.fragment_by_end.get(&start_index).unwrap().clone();
+            let mut f = self.fragment_by_end.remove(&start_index).unwrap();
+            if self.fragment_by_start.contains_key(&end_index) {
+                let (g_start, g_end) = get_start_end(&self.fragment_by_start, end_index);
+                // self.fragment_by_end.remove(&f.end);
+                self.fragment_by_start.remove(&g_start);
+                if f.end == g_end && f.start == g_start {
                     f.ring.push(end);
-                    self.result.push(f.ring.clone());
+                    self.result.push(f.ring.drain(..).collect());
                 } else {
-                    let mut temp = f.ring.clone();
-                    temp.extend(g.ring.iter().cloned());
-                    f.ring = temp.clone();
-                    self.fragment_by_start.insert(f.start, Fragment { start: f.start, end: g.end, ring: temp });
-                    self.fragment_by_end.insert(g.end, self.fragment_by_start[&f.start].clone());
-                    // self.fragment_by_end.insert(start_index, f.clone());
+                    let temp;
+                    {
+                        let g = self.fragment_by_start.get(&end_index).unwrap();
+                        f.ring.extend(g.ring.iter().cloned());
+                        temp = f.ring.drain(..).collect();
+                    }
+                    self.fragment_by_start.insert(f.start, Fragment { start: f.start, end: g_end, ring: temp });
+                    self.fragment_by_end.insert(g_end, self.fragment_by_start[&f.start].clone());
                 }
             } else {
-                self.fragment_by_end.remove(&f.end);
+                // self.fragment_by_end.remove(&f.end);
                 if let Some(a) = self.fragment_by_start.get_mut(&f.start) {
                     a.end = end_index;
                     a.ring.push(end.clone()); // a.ring = f.ring.clone();
                 }
                 f.ring.push(end);
                 f.end = end_index;
-                self.fragment_by_end.insert(end_index, f.clone());
-                // self.fragment_by_end.insert(start_index, f.clone());
+                self.fragment_by_end.insert(end_index, f);
             }
-
-        } else if let Some(f) = cfbs1.get_mut(&end_index) {
-            if let Some(g) = cfbe1.get_mut(&start_index) {
-                self.fragment_by_start.remove(&f.start);
-                self.fragment_by_end.remove(&g.end);
-                if f.end == g.end && f.start == g.start {
+        } else if self.fragment_by_start.contains_key(&end_index) {
+            // let mut f = self.fragment_by_start.get(&end_index).unwrap().clone();
+            let mut f = self.fragment_by_start.remove(&end_index).unwrap();
+            if self.fragment_by_end.contains_key(&start_index) {
+                let (g_start, g_end) = get_start_end(&self.fragment_by_end, start_index);
+                // self.fragment_by_start.remove(&f.start);
+                self.fragment_by_end.remove(&g_end);
+                if f.end == g_end && f.start == g_start {
                     f.ring.push(end);
-                    self.result.push(f.ring.clone());
+                    self.result.push(f.ring.drain(..).collect());
                 } else {
-                    let mut temp = g.ring.clone();
-                    temp.extend(f.ring.iter().cloned());
-                    g.ring = temp.clone();
-                    self.fragment_by_start.insert(g.start, Fragment { start: g.start, end: f.end, ring: temp });
-                    self.fragment_by_end.insert(f.end, self.fragment_by_start[&g.start].clone());
-                    // self.fragment_by_end.insert(start_index, self.fragment_by_start[&g.start].clone());
+                    let temp;
+                    {
+                        let g = self.fragment_by_end.get(&start_index).unwrap();
+                        f.ring.extend(g.ring.iter().cloned());
+                        temp = f.ring.drain(..).collect();
+                    }
+                    self.fragment_by_start.insert(g_start, Fragment { start: g_start, end: f.end, ring: temp });
+                    self.fragment_by_end.insert(f.end, self.fragment_by_start[&g_start].clone());
                 }
             } else {
-                self.fragment_by_start.remove(&f.start);
+                // self.fragment_by_start.remove(&f.start);
                 if let Some(a) = self.fragment_by_end.get_mut(&f.end) {
                     a.start = start_index;
                     a.ring.insert(0, start.clone()); // a.ring = f.ring.clone();
                 }
                 f.ring.insert(0, start);
                 f.start = start_index;
-                self.fragment_by_start.insert(start_index, f.clone());
-                // self.fragment_by_start.insert(end_index, f.clone());
+                self.fragment_by_start.insert(start_index, f);
             }
         } else {
             self.fragment_by_start.insert(start_index, Fragment { start: start_index, end: end_index, ring: vec![start, end] });
             self.fragment_by_end.insert(end_index, self.fragment_by_start[&start_index].clone());
         }
     }
+}
+
+fn get_start_end(map: &BTreeMap<usize, Fragment>, ix: usize) -> (usize, usize) {
+    let frag = map.get(&ix).unwrap();
+    (frag.start, frag.end)
 }
