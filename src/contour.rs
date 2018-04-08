@@ -142,8 +142,8 @@ impl IsoRingBuilder {
     }
 
     pub fn compute(&mut self, values: &[f64], value: f64) {
-        let dx = self.dx;
-        let dy = self.dy;
+        let dx = self.dx as i32;
+        let dy = self.dy as i32;
         let mut x = -1;
         let mut y = -1;
         let mut t0;
@@ -152,44 +152,44 @@ impl IsoRingBuilder {
         let mut t3;
 
         // Special case for the first row (y = -1, t2 = t3 = 0).
-        t1 = values[0] >= value;
-        CASES[((t1 as u32) << 1) as usize].iter().map(|ring| {
+        t1 = (values[0] >= value) as u32;
+        CASES[(t1 << 1) as usize].iter().map(|ring| {
             self.stitch(&ring, x, y);
         }).collect::<Vec<()>>();
         x += 1;
-        while x < dx as i32 - 1 {
+        while x < dx - 1 {
             t0 = t1;
-            t1 = values[(x + 1) as usize] >= value;
-            CASES[((t0 as u32) | (t1 as u32) << 1) as usize].iter().map(|ring|{
+            t1 = (values[(x + 1) as usize] >= value) as u32;
+            CASES[(t0 | t1 << 1) as usize].iter().map(|ring|{
                 self.stitch(&ring, x, y);
             }).collect::<Vec<()>>();
             x += 1;
         }
-        CASES[((t1 as u32) << 0) as usize].iter().map(|ring|{
+        CASES[(t1 << 0) as usize].iter().map(|ring|{
             self.stitch(&ring, x, y);
         }).collect::<Vec<()>>();
 
         // General case for the intermediate rows.
         y += 1;
-        while y < dy as i32 - 1 {
+        while y < dy - 1 {
             x = -1;
-            t1 = values[(y * dx as i32 + dx as i32) as usize] >= value;
-            t2 = values[(y * dx as i32) as usize] >= value;
-            CASES[((t1 as u32) << 1 | (t2 as u32) << 2) as usize].iter().map(|ring|{
+            t1 = (values[(y * dx + dx) as usize] >= value) as u32;
+            t2 = (values[(y * dx) as usize] >= value) as u32;
+            CASES[(t1 << 1 | t2 << 2) as usize].iter().map(|ring|{
                 self.stitch(&ring, x, y);
             }).collect::<Vec<()>>();
             x += 1;
-            while x < dx as i32 - 1 {
+            while x < dx - 1 {
                t0 = t1;
-               t1 = values[(y * dx as i32 + dx as i32 + x + 1) as usize] >= value;
+               t1 = (values[(y * dx + dx + x + 1) as usize] >= value) as u32;
                t3 = t2;
-               t2 = values[(y * dx as i32 + x + 1) as usize] >= value;
-               CASES[((t0 as u32) | (t1 as u32) << 1 | (t2 as u32) << 2 | (t3 as u32) << 3) as usize].iter().map(|ring| {
+               t2 = (values[(y * dx + x + 1) as usize] >= value) as u32;
+               CASES[(t0 | t1 << 1 | t2 << 2 | t3 << 3) as usize].iter().map(|ring| {
                    self.stitch(&ring, x, y);
                }).collect::<Vec<()>>();
                x += 1;
            }
-           CASES[((t1 as u32) | (t2 as u32) << 3) as usize].iter().map(|ring|{
+           CASES[(t1 | t2 << 3) as usize].iter().map(|ring|{
                self.stitch(&ring, x, y);
            }).collect::<Vec<()>>();
            y += 1;
@@ -197,20 +197,20 @@ impl IsoRingBuilder {
 
         // Special case for the last row (y = dy - 1, t0 = t1 = 0).
         x = -1;
-        t2 = values[(y * dx as i32) as usize] >= value;
-        CASES[((t2 as u32) << 2) as usize].iter().map(|ring|{
+        t2 = (values[(y * dx) as usize] >= value) as u32;
+        CASES[(t2 << 2) as usize].iter().map(|ring|{
             self.stitch(&ring, x, y);
         }).collect::<Vec<()>>();
         x += 1;
-        while x < dx as i32 - 1 {
+        while x < dx - 1 {
             t3 = t2;
-            t2 = values[(y * dx as i32 + x + 1) as usize] >= value;
-            CASES[((t2 as u32) << 2 | (t3 as u32) << 3) as usize].iter().map(|ring|{
+            t2 = (values[(y * dx + x + 1) as usize] >= value) as u32;
+            CASES[(t2 << 2 | t3 << 3) as usize].iter().map(|ring|{
                 self.stitch(&ring, x, y);
             }).collect::<Vec<()>>();
             x += 1;
         }
-        CASES[((t2 as u32) << 3) as usize].iter().map(|ring|{
+        CASES[(t2 << 3) as usize].iter().map(|ring|{
             self.stitch(&ring, x, y);
         }).collect::<Vec<()>>();
     }
@@ -233,22 +233,20 @@ impl IsoRingBuilder {
                 self.fragment_by_start.remove(&g_start);
                 if f.end == g_end && f.start == g_start {
                     f.ring.push(end);
-                    self.result.push(f.ring.drain(..).collect());
+                    self.result.push(f.ring);
                 } else {
-                    let temp;
                     {
                         let g = self.fragment_by_start.get(&end_index).unwrap();
                         f.ring.extend(g.ring.iter().cloned());
-                        temp = f.ring.drain(..).collect();
                     }
-                    self.fragment_by_start.insert(f.start, Fragment { start: f.start, end: g_end, ring: temp });
+                    self.fragment_by_start.insert(f.start, Fragment { start: f.start, end: g_end, ring: f.ring });
                     self.fragment_by_end.insert(g_end, self.fragment_by_start[&f.start].clone());
                 }
             } else {
                 // self.fragment_by_end.remove(&f.end);
                 if let Some(a) = self.fragment_by_start.get_mut(&f.start) {
                     a.end = end_index;
-                    a.ring.push(end.clone()); // a.ring = f.ring.clone();
+                    a.ring.push(end.clone());
                 }
                 f.ring.push(end);
                 f.end = end_index;
@@ -263,22 +261,20 @@ impl IsoRingBuilder {
                 self.fragment_by_end.remove(&g_end);
                 if f.end == g_end && f.start == g_start {
                     f.ring.push(end);
-                    self.result.push(f.ring.drain(..).collect());
+                    self.result.push(f.ring);
                 } else {
-                    let temp;
                     {
                         let g = self.fragment_by_end.get(&start_index).unwrap();
                         f.ring.extend(g.ring.iter().cloned());
-                        temp = f.ring.drain(..).collect();
                     }
-                    self.fragment_by_start.insert(g_start, Fragment { start: g_start, end: f.end, ring: temp });
+                    self.fragment_by_start.insert(g_start, Fragment { start: g_start, end: f.end, ring: f.ring });
                     self.fragment_by_end.insert(f.end, self.fragment_by_start[&g_start].clone());
                 }
             } else {
                 // self.fragment_by_start.remove(&f.start);
                 if let Some(a) = self.fragment_by_end.get_mut(&f.end) {
                     a.start = start_index;
-                    a.ring.insert(0, start.clone()); // a.ring = f.ring.clone();
+                    a.ring.insert(0, start.clone());
                 }
                 f.ring.insert(0, start);
                 f.start = start_index;
