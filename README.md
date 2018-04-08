@@ -1,7 +1,8 @@
 # contour-rs
 
 Warning: work in progress  
-  
+
+[![Build Status](https://travis-ci.org/mthh/contour-rs.svg?branch=master)](https://travis-ci.org/mthh/contour-rs)  
 
 Computes *isorings* and __*contour polygons*__ by applying [marching squares](https://en.wikipedia.org/wiki/Marching_squares) to a rectangular array of numeric values.  
 This is a port of [d3-contour](https://github.com/d3/d3-contour).  
@@ -13,7 +14,7 @@ The API exposes:
 - a `ContourBuilder` struct, which computes isorings coordinates for a `Vec` of threshold values and transform them in `MultiPolygon`s (-> returns a `Vec` of GeoJSON Features).
 
 
-#### Simple example: 
+#### Simple example:
 
 ```rust
 let c = ContourBuilder::new(vec![0.5], 10, 10); // Vec of thresholds, x dim., y dim.
