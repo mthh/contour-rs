@@ -54,20 +54,24 @@ impl ContourBuilder {
     fn smoooth_linear(&self, ring: &mut Ring, values: &[f64], value: f64) {
         let dx = self.dx;
         let dy = self.dy;
+        let len_values = values.len();
         ring.iter_mut().map(|point| {
             let x = point[0];
             let y = point[1];
             let xt = x.trunc() as u32;
             let yt = y.trunc() as u32;
             let mut v0;
-            let v1 = values[(yt * dx + xt) as usize];
-            if x > 0.0 && x < (dx as f64) && xt as f64 == x {
-                v0 = values[(yt * dx + xt - 1) as usize];
-                point[0] = x + (value - v0) / (v1 - v0) - 0.5;
-            }
-            if y > 0.0 && y < (dy as f64) && yt as f64 == y {
-              v0 = values[((yt - 1) * dx + xt) as usize];
-              point[1] = y + (value - v0) / (v1 - v0) - 0.5;
+            let ix = (yt * dx + xt) as usize;
+            if ix < len_values {
+                let v1 = values[ix];
+                if x > 0.0 && x < (dx as f64) && xt as f64 == x {
+                    v0 = values[(yt * dx + xt - 1) as usize];
+                    point[0] = x + (value - v0) / (v1 - v0) - 0.5;
+                }
+                if y > 0.0 && y < (dy as f64) && yt as f64 == y {
+                    v0 = values[((yt - 1) * dx + xt) as usize];
+                    point[1] = y + (value - v0) / (v1 - v0) - 0.5;
+                }
             }
         }).collect::<Vec<()>>();
     }
@@ -230,14 +234,16 @@ impl IsoRingBuilder {
             if self.fragment_by_start.contains_key(&end_index) {
                 let (g_start, g_end) = get_start_end(&self.fragment_by_start, end_index);
                 // self.fragment_by_end.remove(&f.end);
-                self.fragment_by_start.remove(&g_start);
+                let temp = self.fragment_by_start.remove(&g_start);
                 if f.end == g_end && f.start == g_start {
                     f.ring.push(end);
                     self.result.push(f.ring);
                 } else {
-                    {
+                    if g_start != end_index {
                         let g = self.fragment_by_start.get(&end_index).unwrap();
                         f.ring.extend(g.ring.iter().cloned());
+                    } else if let Some(_t) = temp {
+                        f.ring.extend(_t.ring.iter().cloned());
                     }
                     self.fragment_by_start.insert(f.start, Fragment { start: f.start, end: g_end, ring: f.ring });
                     self.fragment_by_end.insert(g_end, self.fragment_by_start[&f.start].clone());
@@ -258,14 +264,16 @@ impl IsoRingBuilder {
             if self.fragment_by_end.contains_key(&start_index) {
                 let (g_start, g_end) = get_start_end(&self.fragment_by_end, start_index);
                 // self.fragment_by_start.remove(&f.start);
-                self.fragment_by_end.remove(&g_end);
+                let temp = self.fragment_by_end.remove(&g_end);
                 if f.end == g_end && f.start == g_start {
                     f.ring.push(end);
                     self.result.push(f.ring);
                 } else {
-                    {
+                    if start_index != g_end {
                         let g = self.fragment_by_end.get(&start_index).unwrap();
                         f.ring.extend(g.ring.iter().cloned());
+                    } else if let Some(_t) = temp {
+                        f.ring.extend(_t.ring.iter().cloned());
                     }
                     self.fragment_by_start.insert(g_start, Fragment { start: g_start, end: f.end, ring: f.ring });
                     self.fragment_by_end.insert(f.end, self.fragment_by_start[&g_start].clone());
