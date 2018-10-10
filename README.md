@@ -1,6 +1,7 @@
 # contour-rs
 
-[![Build Status](https://travis-ci.org/mthh/contour-rs.svg?branch=master)](https://travis-ci.org/mthh/contour-rs)  
+[![Build Status Travis](https://travis-ci.org/mthh/contour-rs.svg?branch=master)](https://travis-ci.org/mthh/contour-rs)  
+[![Build status Appveyor](https://ci.appveyor.com/api/projects/status/uemh49tq7vy4uke6?svg=true)](https://ci.appveyor.com/project/mthh/contour-rs)
 
 Computes *isorings* and __*contour polygons*__ by applying [marching squares](https://en.wikipedia.org/wiki/Marching_squares) to a rectangular array of numeric values.  
 Outputs ring coordinates or polygons contours as a `Vec` of [GeoJSON](https://github.com/georust/rust-geojson) [Feature](https://docs.rs/geojson/0.9.1/geojson/struct.Feature.html).  
