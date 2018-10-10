@@ -73,7 +73,7 @@ impl ContourBuilder {
                     point[1] = y + (value - v0) / (v1 - v0) - 0.5;
                 }
             }
-        }).collect::<Vec<()>>();
+        }).for_each(drop);
     }
 
     pub fn contours(&self, values: &[f64]) -> Vec<Feature> {
@@ -97,7 +97,7 @@ impl ContourBuilder {
             } else {
                 holes.push(ring);
             }
-        }).collect::<Vec<()>>();
+        }).for_each(drop);
 
         holes.drain(..).map(|hole|{
             for i in 0..polygons.len() {
@@ -107,7 +107,7 @@ impl ContourBuilder {
                     return;
                 }
             }
-        }).collect::<Vec<()>>();
+        }).for_each(drop);
 
         let mut properties = Map::new();
         properties.insert(String::from("value"), to_value(value).unwrap());
@@ -159,19 +159,19 @@ impl IsoRingBuilder {
         t1 = (values[0] >= value) as u32;
         CASES[(t1 << 1) as usize].iter().map(|ring| {
             self.stitch(&ring, x, y);
-        }).collect::<Vec<()>>();
+        }).for_each(drop);
         x += 1;
         while x < dx - 1 {
             t0 = t1;
             t1 = (values[(x + 1) as usize] >= value) as u32;
             CASES[(t0 | t1 << 1) as usize].iter().map(|ring|{
                 self.stitch(&ring, x, y);
-            }).collect::<Vec<()>>();
+            }).for_each(drop);
             x += 1;
         }
         CASES[(t1 << 0) as usize].iter().map(|ring|{
             self.stitch(&ring, x, y);
-        }).collect::<Vec<()>>();
+        }).for_each(drop);
 
         // General case for the intermediate rows.
         y += 1;
@@ -181,7 +181,7 @@ impl IsoRingBuilder {
             t2 = (values[(y * dx) as usize] >= value) as u32;
             CASES[(t1 << 1 | t2 << 2) as usize].iter().map(|ring|{
                 self.stitch(&ring, x, y);
-            }).collect::<Vec<()>>();
+            }).for_each(drop);
             x += 1;
             while x < dx - 1 {
                t0 = t1;
@@ -190,12 +190,12 @@ impl IsoRingBuilder {
                t2 = (values[(y * dx + x + 1) as usize] >= value) as u32;
                CASES[(t0 | t1 << 1 | t2 << 2 | t3 << 3) as usize].iter().map(|ring| {
                    self.stitch(&ring, x, y);
-               }).collect::<Vec<()>>();
+               }).for_each(drop);
                x += 1;
            }
            CASES[(t1 | t2 << 3) as usize].iter().map(|ring|{
                self.stitch(&ring, x, y);
-           }).collect::<Vec<()>>();
+           }).for_each(drop);
            y += 1;
         }
 
@@ -204,19 +204,19 @@ impl IsoRingBuilder {
         t2 = (values[(y * dx) as usize] >= value) as u32;
         CASES[(t2 << 2) as usize].iter().map(|ring|{
             self.stitch(&ring, x, y);
-        }).collect::<Vec<()>>();
+        }).for_each(drop);
         x += 1;
         while x < dx - 1 {
             t3 = t2;
             t2 = (values[(y * dx + x + 1) as usize] >= value) as u32;
             CASES[(t2 << 2 | t3 << 3) as usize].iter().map(|ring|{
                 self.stitch(&ring, x, y);
-            }).collect::<Vec<()>>();
+            }).for_each(drop);
             x += 1;
         }
         CASES[(t2 << 3) as usize].iter().map(|ring|{
             self.stitch(&ring, x, y);
-        }).collect::<Vec<()>>();
+        }).for_each(drop);
     }
 
     fn index(&self, point: &Pt) -> usize {
