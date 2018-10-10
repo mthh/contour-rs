@@ -261,11 +261,9 @@ impl IsoRingBuilder {
         let start_index = self.index(&start);
         let end_index = self.index(&end);
         if self.fragment_by_end.contains_key(&start_index){
-            // let mut f = self.fragment_by_end.get(&start_index).unwrap().clone();
             let mut f = self.fragment_by_end.remove(&start_index).unwrap();
             if self.fragment_by_start.contains_key(&end_index) {
                 let (g_start, g_end) = get_start_end(&self.fragment_by_start, end_index);
-                // self.fragment_by_end.remove(&f.end);
                 let temp = self.fragment_by_start.remove(&g_start);
                 if f.end == g_end && f.start == g_start {
                     f.ring.push(end);
@@ -275,13 +273,12 @@ impl IsoRingBuilder {
                         let g = self.fragment_by_start.get(&end_index).unwrap();
                         f.ring.extend(g.ring.iter().cloned());
                     } else if let Some(_t) = temp {
-                        f.ring.extend(_t.ring.iter().cloned());
+                        f.ring.extend(_t.ring);
                     }
                     self.fragment_by_start.insert(f.start, Fragment { start: f.start, end: g_end, ring: f.ring });
                     self.fragment_by_end.insert(g_end, self.fragment_by_start[&f.start].clone());
                 }
             } else {
-                // self.fragment_by_end.remove(&f.end);
                 if let Some(a) = self.fragment_by_start.get_mut(&f.start) {
                     a.end = end_index;
                     a.ring.push(end.clone());
@@ -291,11 +288,9 @@ impl IsoRingBuilder {
                 self.fragment_by_end.insert(end_index, f);
             }
         } else if self.fragment_by_start.contains_key(&end_index) {
-            // let mut f = self.fragment_by_start.get(&end_index).unwrap().clone();
             let mut f = self.fragment_by_start.remove(&end_index).unwrap();
             if self.fragment_by_end.contains_key(&start_index) {
                 let (g_start, g_end) = get_start_end(&self.fragment_by_end, start_index);
-                // self.fragment_by_start.remove(&f.start);
                 let temp = self.fragment_by_end.remove(&g_end);
                 if f.end == g_end && f.start == g_start {
                     f.ring.push(end);
@@ -305,13 +300,12 @@ impl IsoRingBuilder {
                         let g = self.fragment_by_end.get(&start_index).unwrap();
                         f.ring.extend(g.ring.iter().cloned());
                     } else if let Some(_t) = temp {
-                        f.ring.extend(_t.ring.iter().cloned());
+                        f.ring.extend(_t.ring);
                     }
                     self.fragment_by_start.insert(g_start, Fragment { start: g_start, end: f.end, ring: f.ring });
                     self.fragment_by_end.insert(f.end, self.fragment_by_start[&g_start].clone());
                 }
             } else {
-                // self.fragment_by_start.remove(&f.start);
                 if let Some(a) = self.fragment_by_end.get_mut(&f.end) {
                     a.start = start_index;
                     a.ring.insert(0, start.clone());
