@@ -19,7 +19,7 @@ The API exposes:
 #### Simple example:
 
 ```rust
-let c = ContourBuilder::new(vec![0.5], 10, 10); // Vec of thresholds, x dim., y dim.
+let c = ContourBuilder::new(10, 10, false); // x dim., y dim., smoothing
 let res = c.contours(&vec![
     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
@@ -32,7 +32,7 @@ let res = c.contours(&vec![
     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-]);
+], vec![0.5]); // values, thresholds
 ```
 __*Output:*__
 ```rust

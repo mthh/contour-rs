@@ -22,20 +22,20 @@ static VALUES: [f64; 110] = [
 
 #[bench]
 fn bench_build_geojson_contour(b: &mut Bencher) {
-    let c = ContourBuilder::new(vec![0.5], 10, 10, true);
+    let c = ContourBuilder::new(10, 10, true);
     b.iter(||
         black_box(
-            c.contours(&VALUES)
+            c.contours(&VALUES, vec![0.5])
         )
     );
 }
 
 #[bench]
 fn bench_build_geojson_contour_no_smoothing(b: &mut Bencher) {
-    let c = ContourBuilder::new(vec![0.5], 10, 10, false);
+    let c = ContourBuilder::new(10, 10, false);
     b.iter(||
         black_box(
-            c.contours(&VALUES)
+            c.contours(&VALUES, vec![0.5])
         )
     );
 }

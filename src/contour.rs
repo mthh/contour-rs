@@ -37,17 +37,28 @@ struct Fragment {
     ring: Ring,
 }
 
+/// Contours generator to
+/// be used on a rectangular `Vec` of values to
+/// get a `Vec` of Features of MultiPolygon (use [`IsoRingBuilder`] internally).
+///
+/// [`IsoRingBuilder`]: struct.IsoRingBuilder.html
 pub struct ContourBuilder {
-    threshold: Vec<f64>,
     dx: u32,
     dy: u32,
     smooth: bool,
 }
 
 impl ContourBuilder {
-    pub fn new(threshold: Vec<f64>, dx: u32, dy: u32, smooth: bool) -> Self {
+    /// Constructs a new contours generator for a grid with `dx` * `dy` dimension.
+    ///
+    /// # Arguments
+    ///
+    /// * `dx` - The number of columns in the grid.
+    /// * `dy` - The number of rows in the grid.
+    /// * `smooth` - Whether or not the generated rings will be smoothed using linear interpolation.
+    pub fn new(dx: u32, dy: u32, smooth: bool) -> Self {
         ContourBuilder {
-            threshold: threshold, dx: dx, dy: dy, smooth: smooth,
+            dx: dx, dy: dy, smooth: smooth,
         }
     }
 
@@ -76,21 +87,29 @@ impl ContourBuilder {
         }).for_each(drop);
     }
 
-    pub fn contours(&self, values: &[f64]) -> Vec<Feature> {
-        self.threshold.iter().map(|value|{
+    /// Computes contours according the given input `values` and the given `thresholds`.
+    /// Returns a `Vec` of Features of MultiPolygon.
+    /// The threshold value of each Feature is stored in its `value` property.
+    ///
+    /// # Arguments
+    ///
+    /// * `values` - ...
+    /// * `thresholds` - ...
+    pub fn contours(&self, values: &[f64], thresholds: Vec<f64>) -> Vec<Feature> {
+        thresholds.iter().map(|value|{
             self.contour(values, *value)
         }).collect::<Vec<Feature>>()
     }
 
-    fn contour(&self, values: &[f64], value: f64) -> Feature {
+    fn contour(&self, values: &[f64], threshold: f64) -> Feature {
         let mut polygons = Vec::new();
         let mut holes = Vec::new();
         let mut isoring = IsoRingBuilder::new(self.dx, self.dy);
-        isoring.compute(values, value);
+        isoring.compute(values, threshold);
 
         isoring.result.drain(..).map(|mut ring|{
             if self.smooth {
-                self.smoooth_linear(&mut ring, values, value);
+                self.smoooth_linear(&mut ring, values, threshold);
             }
             if area(&ring) > 0.0 {
                 polygons.push(vec![ring]);
@@ -110,7 +129,7 @@ impl ContourBuilder {
         }).for_each(drop);
 
         let mut properties = Map::new();
-        properties.insert(String::from("value"), to_value(value).unwrap());
+        properties.insert(String::from("value"), to_value(threshold).unwrap());
         Feature {
             geometry: Some(Geometry {
                 value: MultiPolygon(polygons),
@@ -125,7 +144,7 @@ impl ContourBuilder {
     }
 }
 
-
+/// Isoring generator to compute marching squares with isolines stitched into rings.
 pub struct IsoRingBuilder {
     fragment_by_start: BTreeMap<usize, Fragment>,
     fragment_by_end: BTreeMap<usize, Fragment>,
@@ -135,6 +154,11 @@ pub struct IsoRingBuilder {
 }
 
 impl IsoRingBuilder {
+    /// Constructs a new IsoRing generator for a grid with `dx` * `dy` dimension.
+    /// # Arguments
+    ///
+    /// * `dx` - The number of columns in the grid.
+    /// * `dy` - The number of rows in the grid.
     pub fn new(dx: u32, dy: u32) -> Self {
        IsoRingBuilder {
            fragment_by_start: BTreeMap::new(),
@@ -145,7 +169,15 @@ impl IsoRingBuilder {
        }
     }
 
-    pub fn compute(&mut self, values: &[f64], value: f64) {
+    /// Computes isoring for the given slice of `values` according to the `threshold` value
+    /// (the inside of the isoring is the surface where input `values` are greater than or equal
+    /// to the given threshold value).
+    ///
+    /// # Arguments
+    ///
+    /// * `values` - The number of columns in the grid.
+    /// * `threshold` - The number of rows in the grid.
+    pub fn compute(&mut self, values: &[f64], threshold: f64) {
         let dx = self.dx as i32;
         let dy = self.dy as i32;
         let mut x = -1;
@@ -156,14 +188,14 @@ impl IsoRingBuilder {
         let mut t3;
 
         // Special case for the first row (y = -1, t2 = t3 = 0).
-        t1 = (values[0] >= value) as u32;
+        t1 = (values[0] >= threshold) as u32;
         CASES[(t1 << 1) as usize].iter().map(|ring| {
             self.stitch(&ring, x, y);
         }).for_each(drop);
         x += 1;
         while x < dx - 1 {
             t0 = t1;
-            t1 = (values[(x + 1) as usize] >= value) as u32;
+            t1 = (values[(x + 1) as usize] >= threshold) as u32;
             CASES[(t0 | t1 << 1) as usize].iter().map(|ring|{
                 self.stitch(&ring, x, y);
             }).for_each(drop);
@@ -177,17 +209,17 @@ impl IsoRingBuilder {
         y += 1;
         while y < dy - 1 {
             x = -1;
-            t1 = (values[(y * dx + dx) as usize] >= value) as u32;
-            t2 = (values[(y * dx) as usize] >= value) as u32;
+            t1 = (values[(y * dx + dx) as usize] >= threshold) as u32;
+            t2 = (values[(y * dx) as usize] >= threshold) as u32;
             CASES[(t1 << 1 | t2 << 2) as usize].iter().map(|ring|{
                 self.stitch(&ring, x, y);
             }).for_each(drop);
             x += 1;
             while x < dx - 1 {
                t0 = t1;
-               t1 = (values[(y * dx + dx + x + 1) as usize] >= value) as u32;
+               t1 = (values[(y * dx + dx + x + 1) as usize] >= threshold) as u32;
                t3 = t2;
-               t2 = (values[(y * dx + x + 1) as usize] >= value) as u32;
+               t2 = (values[(y * dx + x + 1) as usize] >= threshold) as u32;
                CASES[(t0 | t1 << 1 | t2 << 2 | t3 << 3) as usize].iter().map(|ring| {
                    self.stitch(&ring, x, y);
                }).for_each(drop);
@@ -201,14 +233,14 @@ impl IsoRingBuilder {
 
         // Special case for the last row (y = dy - 1, t0 = t1 = 0).
         x = -1;
-        t2 = (values[(y * dx) as usize] >= value) as u32;
+        t2 = (values[(y * dx) as usize] >= threshold) as u32;
         CASES[(t2 << 2) as usize].iter().map(|ring|{
             self.stitch(&ring, x, y);
         }).for_each(drop);
         x += 1;
         while x < dx - 1 {
             t3 = t2;
-            t2 = (values[(y * dx + x + 1) as usize] >= value) as u32;
+            t2 = (values[(y * dx + x + 1) as usize] >= threshold) as u32;
             CASES[(t2 << 2 | t3 << 3) as usize].iter().map(|ring|{
                 self.stitch(&ring, x, y);
             }).for_each(drop);

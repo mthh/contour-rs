@@ -1,3 +1,9 @@
+//! Computes isorings and contour polygons by applying
+//! [marching squares](https://en.wikipedia.org/wiki/Marching_squares)
+//! to a rectangular array of numeric values.  
+//! Outputs ring coordinates or polygons contours as a Vec of GeoJSON Feature.
+//! This is a port of [d3-contour](https://github.com/d3/d3-contour/).
+
 #[macro_use] extern crate lazy_static;
 extern crate geojson;
 extern crate serde_json;
@@ -14,7 +20,7 @@ mod tests {
 
     #[test]
     fn test_empty_polygons() {
-        let c = ContourBuilder::new(vec![0.5], 10, 10, true);
+        let c = ContourBuilder::new(10, 10, true);
         let res = c.contours(&[
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
@@ -27,7 +33,7 @@ mod tests {
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-        ]);
+        ], vec![0.5]);
         match res[0].clone().geometry.unwrap().value {
             geojson::Value::MultiPolygon(p) => {
                 assert!(p.is_empty());
@@ -38,7 +44,7 @@ mod tests {
 
     #[test]
     fn test_simple_polygon() {
-        let c = ContourBuilder::new(vec![0.5], 10, 10, true);
+        let c = ContourBuilder::new(10, 10, true);
         let res = c.contours(&[
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
@@ -51,7 +57,7 @@ mod tests {
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-        ]);
+        ], vec![0.5]);
         match res[0].clone().geometry.unwrap().value {
             geojson::Value::MultiPolygon(p) => {
                 assert_eq!(
@@ -69,7 +75,7 @@ mod tests {
 
     #[test]
     fn test_polygon_with_hole() {
-        let c = ContourBuilder::new(vec![0.5], 10, 10, true);
+        let c = ContourBuilder::new(10, 10, true);
         let res = c.contours(&[
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
@@ -82,7 +88,7 @@ mod tests {
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-        ]);
+        ], vec![0.5]);
         match res[0].clone().geometry.unwrap().value {
             geojson::Value::MultiPolygon(p) => {
                 assert_eq!(
@@ -101,7 +107,7 @@ mod tests {
 
     #[test]
     fn test_multipolygon() {
-        let c = ContourBuilder::new(vec![0.5], 10, 10, true);
+        let c = ContourBuilder::new(10, 10, true);
         let res = c.contours(&[
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
@@ -114,7 +120,7 @@ mod tests {
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-        ]);
+        ], vec![0.5]);
         match res[0].clone().geometry.unwrap().value {
             geojson::Value::MultiPolygon(p) => {
                 assert_eq!(
@@ -137,7 +143,7 @@ mod tests {
 
     #[test]
     fn test_multipolygon_with_hole() {
-        let c = ContourBuilder::new(vec![0.5], 10, 10, true);
+        let c = ContourBuilder::new(10, 10, true);
         let res = c.contours(&[
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
@@ -150,7 +156,7 @@ mod tests {
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-        ]);
+        ], vec![0.5]);
         match res[0].clone().geometry.unwrap().value {
             geojson::Value::MultiPolygon(p) => {
                 assert_eq!(
@@ -174,7 +180,7 @@ mod tests {
 
     #[test]
     fn test_simple_polygon_no_smoothing() {
-        let c = ContourBuilder::new(vec![0.5], 10, 10, false);
+        let c = ContourBuilder::new(10, 10, false);
         let res = c.contours(&[
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
@@ -187,7 +193,7 @@ mod tests {
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-        ]);
+        ], vec![0.5]);
         match res[0].clone().geometry.unwrap().value {
             geojson::Value::MultiPolygon(p) => {
                 assert_eq!(
@@ -206,7 +212,7 @@ mod tests {
 
     #[test]
     fn test_multiple_thresholds() {
-        let c = ContourBuilder::new(vec![0.5, 1.5], 10, 10, true);
+        let c = ContourBuilder::new(10, 10, true);
         let res = c.contours(&[
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
@@ -219,7 +225,7 @@ mod tests {
             0., 0., 0., 1., 1., 1., 1., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-        ]);
+        ], vec![0.5, 1.5]);
         match res[0].clone().geometry.unwrap().value {
             geojson::Value::MultiPolygon(p) => {
                 assert_eq!(
