@@ -2,11 +2,12 @@
 
 [![Build Status](https://travis-ci.org/mthh/contour-rs.svg?branch=master)](https://travis-ci.org/mthh/contour-rs)  
 
-<div style="text-align:center"><img src ="https://raw.githubusercontent.com/mthh/contour-rs/master/illustration.png" /></div>
-
 Computes *isorings* and __*contour polygons*__ by applying [marching squares](https://en.wikipedia.org/wiki/Marching_squares) to a rectangular array of numeric values.  
-This is a port of [d3-contour](https://github.com/d3/d3-contour).  
 Outputs ring coordinates or polygons contours as a `Vec` of [GeoJSON](https://github.com/georust/rust-geojson) [Feature](https://docs.rs/geojson/0.9.1/geojson/struct.Feature.html).  
+This is a port of [d3-contour](https://github.com/d3/d3-contour).  
+
+<div style="text-align:center"><img src ="https://raw.githubusercontent.com/mthh/contour-rs/master/illustration.png" /></div><br>
+
 
 
 The API exposes:
