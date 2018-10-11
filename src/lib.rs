@@ -1,6 +1,6 @@
 //! Computes isorings and contour polygons by applying
 //! [marching squares](https://en.wikipedia.org/wiki/Marching_squares)
-//! to a rectangular array of numeric values.  
+//! to a rectangular array of numeric values.
 //! Outputs ring coordinates or polygons contours as a Vec of GeoJSON Feature.
 //! This is a port of [d3-contour](https://github.com/d3/d3-contour/).
 
@@ -33,7 +33,7 @@ mod tests {
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-        ], vec![0.5]);
+        ], &[0.5]);
         match res[0].clone().geometry.unwrap().value {
             geojson::Value::MultiPolygon(p) => {
                 assert!(p.is_empty());
@@ -57,7 +57,7 @@ mod tests {
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-        ], vec![0.5]);
+        ], &[0.5]);
         match res[0].clone().geometry.unwrap().value {
             geojson::Value::MultiPolygon(p) => {
                 assert_eq!(
@@ -88,7 +88,7 @@ mod tests {
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-        ], vec![0.5]);
+        ], &[0.5]);
         match res[0].clone().geometry.unwrap().value {
             geojson::Value::MultiPolygon(p) => {
                 assert_eq!(
@@ -120,7 +120,7 @@ mod tests {
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-        ], vec![0.5]);
+        ], &[0.5]);
         match res[0].clone().geometry.unwrap().value {
             geojson::Value::MultiPolygon(p) => {
                 assert_eq!(
@@ -156,7 +156,7 @@ mod tests {
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-        ], vec![0.5]);
+        ], &[0.5]);
         match res[0].clone().geometry.unwrap().value {
             geojson::Value::MultiPolygon(p) => {
                 assert_eq!(
@@ -193,7 +193,7 @@ mod tests {
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-        ], vec![0.5]);
+        ], &[0.5]);
         match res[0].clone().geometry.unwrap().value {
             geojson::Value::MultiPolygon(p) => {
                 assert_eq!(
@@ -225,7 +225,7 @@ mod tests {
             0., 0., 0., 1., 1., 1., 1., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-        ], vec![0.5, 1.5]);
+        ], &[0.5, 1.5]);
         match res[0].clone().geometry.unwrap().value {
             geojson::Value::MultiPolygon(p) => {
                 assert_eq!(

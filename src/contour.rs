@@ -95,7 +95,7 @@ impl ContourBuilder {
     ///
     /// * `values` - ...
     /// * `thresholds` - ...
-    pub fn contours(&self, values: &[f64], thresholds: Vec<f64>) -> Vec<Feature> {
+    pub fn contours(&self, values: &[f64], thresholds: &[f64]) -> Vec<Feature> {
         thresholds.iter().map(|value|{
             self.contour(values, *value)
         }).collect::<Vec<Feature>>()

@@ -25,7 +25,7 @@ fn bench_build_geojson_contour(b: &mut Bencher) {
     let c = ContourBuilder::new(10, 10, true);
     b.iter(||
         black_box(
-            c.contours(&VALUES, vec![0.5])
+            c.contours(&VALUES, &[0.5])
         )
     );
 }
@@ -35,7 +35,7 @@ fn bench_build_geojson_contour_no_smoothing(b: &mut Bencher) {
     let c = ContourBuilder::new(10, 10, false);
     b.iter(||
         black_box(
-            c.contours(&VALUES, vec![0.5])
+            c.contours(&VALUES, &[0.5])
         )
     );
 }
