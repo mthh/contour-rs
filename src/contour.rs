@@ -30,7 +30,7 @@ lazy_static! {
     ];
 }
 
-#[derive(Clone, Debug, PartialEq, PartialOrd)]
+#[derive(Clone, Debug)]
 struct Fragment {
     start: usize,
     end: usize,
@@ -105,9 +105,9 @@ impl ContourBuilder {
         let mut polygons = Vec::new();
         let mut holes = Vec::new();
         let mut isoring = IsoRingBuilder::new(self.dx, self.dy);
-        isoring.compute(values, threshold);
+        let mut result = isoring.compute(values, threshold);
 
-        isoring.result.drain(..).map(|mut ring|{
+        result.drain(..).map(|mut ring|{
             if self.smooth {
                 self.smoooth_linear(&mut ring, values, threshold);
             }
@@ -150,7 +150,6 @@ pub struct IsoRingBuilder {
     fragment_by_end: BTreeMap<usize, Fragment>,
     dx: u32,
     dy: u32,
-    result: Vec<Ring>,
 }
 
 impl IsoRingBuilder {
@@ -165,7 +164,6 @@ impl IsoRingBuilder {
            fragment_by_end: BTreeMap::new(),
            dx: dx,
            dy :dy,
-           result: Vec::new(),
        }
     }
 
@@ -177,7 +175,8 @@ impl IsoRingBuilder {
     ///
     /// * `values` - The number of columns in the grid.
     /// * `threshold` - The number of rows in the grid.
-    pub fn compute(&mut self, values: &[f64], threshold: f64) {
+    pub fn compute(&mut self, values: &[f64], threshold: f64) -> Vec<Ring> {
+        let mut result = Vec::new();
         let dx = self.dx as i32;
         let dy = self.dy as i32;
         let mut x = -1;
@@ -190,19 +189,19 @@ impl IsoRingBuilder {
         // Special case for the first row (y = -1, t2 = t3 = 0).
         t1 = (values[0] >= threshold) as u32;
         CASES[(t1 << 1) as usize].iter().map(|ring| {
-            self.stitch(&ring, x, y);
+            self.stitch(&ring, x, y, &mut result);
         }).for_each(drop);
         x += 1;
         while x < dx - 1 {
             t0 = t1;
             t1 = (values[(x + 1) as usize] >= threshold) as u32;
             CASES[(t0 | t1 << 1) as usize].iter().map(|ring|{
-                self.stitch(&ring, x, y);
+                self.stitch(&ring, x, y, &mut result);
             }).for_each(drop);
             x += 1;
         }
         CASES[(t1 << 0) as usize].iter().map(|ring|{
-            self.stitch(&ring, x, y);
+            self.stitch(&ring, x, y, &mut result);
         }).for_each(drop);
 
         // General case for the intermediate rows.
@@ -212,7 +211,7 @@ impl IsoRingBuilder {
             t1 = (values[(y * dx + dx) as usize] >= threshold) as u32;
             t2 = (values[(y * dx) as usize] >= threshold) as u32;
             CASES[(t1 << 1 | t2 << 2) as usize].iter().map(|ring|{
-                self.stitch(&ring, x, y);
+                self.stitch(&ring, x, y, &mut result);
             }).for_each(drop);
             x += 1;
             while x < dx - 1 {
@@ -221,12 +220,12 @@ impl IsoRingBuilder {
                t3 = t2;
                t2 = (values[(y * dx + x + 1) as usize] >= threshold) as u32;
                CASES[(t0 | t1 << 1 | t2 << 2 | t3 << 3) as usize].iter().map(|ring| {
-                   self.stitch(&ring, x, y);
+                   self.stitch(&ring, x, y, &mut result);
                }).for_each(drop);
                x += 1;
            }
            CASES[(t1 | t2 << 3) as usize].iter().map(|ring|{
-               self.stitch(&ring, x, y);
+               self.stitch(&ring, x, y, &mut result);
            }).for_each(drop);
            y += 1;
         }
@@ -235,27 +234,29 @@ impl IsoRingBuilder {
         x = -1;
         t2 = (values[(y * dx) as usize] >= threshold) as u32;
         CASES[(t2 << 2) as usize].iter().map(|ring|{
-            self.stitch(&ring, x, y);
+            self.stitch(&ring, x, y, &mut result);
         }).for_each(drop);
         x += 1;
         while x < dx - 1 {
             t3 = t2;
             t2 = (values[(y * dx + x + 1) as usize] >= threshold) as u32;
             CASES[(t2 << 2 | t3 << 3) as usize].iter().map(|ring|{
-                self.stitch(&ring, x, y);
+                self.stitch(&ring, x, y, &mut result);
             }).for_each(drop);
             x += 1;
         }
         CASES[(t2 << 3) as usize].iter().map(|ring|{
-            self.stitch(&ring, x, y);
+            self.stitch(&ring, x, y, &mut result);
         }).for_each(drop);
+
+        result
     }
 
     fn index(&self, point: &Pt) -> usize {
       return (point[0] * 2.0 + point[1] * (self.dx as f64 + 1.) * 4.) as usize;
     }
 
-    fn stitch(&mut self, line: &Vec<Vec<f64>>, x: i32, y: i32) {
+    fn stitch(&mut self, line: &Vec<Vec<f64>>, x: i32, y: i32, result: &mut Vec<Ring>) {
         let start = vec![line[0][0] + x as f64, line[0][1] + y as f64];
         let end = vec![line[1][0] + x as f64, line[1][1] + y as f64];
         let start_index = self.index(&start);
@@ -267,7 +268,7 @@ impl IsoRingBuilder {
                 let temp = self.fragment_by_start.remove(&g_start);
                 if f.end == g_end && f.start == g_start {
                     f.ring.push(end);
-                    self.result.push(f.ring);
+                    result.push(f.ring);
                 } else {
                     if g_start != end_index {
                         let g = self.fragment_by_start.get(&end_index).unwrap();
@@ -281,7 +282,7 @@ impl IsoRingBuilder {
             } else {
                 if let Some(a) = self.fragment_by_start.get_mut(&f.start) {
                     a.end = end_index;
-                    a.ring.push(end.clone());
+                    a.ring.push(vec![line[1][0] + x as f64, line[1][1] + y as f64]);
                 }
                 f.ring.push(end);
                 f.end = end_index;
@@ -294,7 +295,7 @@ impl IsoRingBuilder {
                 let temp = self.fragment_by_end.remove(&g_end);
                 if f.end == g_end && f.start == g_start {
                     f.ring.push(end);
-                    self.result.push(f.ring);
+                    result.push(f.ring);
                 } else {
                     if start_index != g_end {
                         let g = self.fragment_by_end.get(&start_index).unwrap();
@@ -308,15 +309,16 @@ impl IsoRingBuilder {
             } else {
                 if let Some(a) = self.fragment_by_end.get_mut(&f.end) {
                     a.start = start_index;
-                    a.ring.insert(0, start.clone());
+                    a.ring.insert(0, vec![line[0][0] + x as f64, line[0][1] + y as f64]);
                 }
                 f.ring.insert(0, start);
                 f.start = start_index;
                 self.fragment_by_start.insert(start_index, f);
             }
         } else {
-            self.fragment_by_start.insert(start_index, Fragment { start: start_index, end: end_index, ring: vec![start, end] });
-            self.fragment_by_end.insert(end_index, self.fragment_by_start[&start_index].clone());
+            let a = vec![start, end];
+            self.fragment_by_start.insert(start_index, Fragment { start: start_index, end: end_index, ring: a.clone() });
+            self.fragment_by_end.insert(end_index, Fragment { start: start_index, end: end_index, ring: a });
         }
     }
 }
