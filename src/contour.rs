@@ -2,8 +2,7 @@ use geojson::{Feature, Geometry};
 use geojson::Value::MultiPolygon;
 use serde_json::map::Map;
 use serde_json::to_value;
-use std::collections::BTreeMap;
-
+use rustc_hash::FxHashMap;
 use ::area::{contains, area};
 
 pub type Pt = Vec<f64>;
@@ -146,8 +145,8 @@ impl ContourBuilder {
 
 /// Isoring generator to compute marching squares with isolines stitched into rings.
 pub struct IsoRingBuilder {
-    fragment_by_start: BTreeMap<usize, Fragment>,
-    fragment_by_end: BTreeMap<usize, Fragment>,
+    fragment_by_start: FxHashMap<usize, Fragment>,
+    fragment_by_end: FxHashMap<usize, Fragment>,
     dx: u32,
     dy: u32,
 }
@@ -160,8 +159,8 @@ impl IsoRingBuilder {
     /// * `dy` - The number of rows in the grid.
     pub fn new(dx: u32, dy: u32) -> Self {
        IsoRingBuilder {
-           fragment_by_start: BTreeMap::new(),
-           fragment_by_end: BTreeMap::new(),
+           fragment_by_start: FxHashMap::default(),
+           fragment_by_end: FxHashMap::default(),
            dx: dx,
            dy :dy,
        }
@@ -265,24 +264,23 @@ impl IsoRingBuilder {
             let mut f = self.fragment_by_end.remove(&start_index).unwrap();
             if self.fragment_by_start.contains_key(&end_index) {
                 let (g_start, g_end) = get_start_end(&self.fragment_by_start, end_index);
-                let temp = self.fragment_by_start.remove(&g_start);
                 if f.end == g_end && f.start == g_start {
                     f.ring.push(end);
                     result.push(f.ring);
                 } else {
                     if g_start != end_index {
-                        let g = self.fragment_by_start.get(&end_index).unwrap();
-                        f.ring.extend(g.ring.iter().cloned());
-                    } else if let Some(_t) = temp {
+                        let g = self.fragment_by_start.remove(&end_index).unwrap();
+                        f.ring.extend(g.ring);
+                    } else if let Some(_t) = self.fragment_by_start.remove(&g_start) {
                         f.ring.extend(_t.ring);
                     }
-                    self.fragment_by_start.insert(f.start, Fragment { start: f.start, end: g_end, ring: f.ring });
-                    self.fragment_by_end.insert(g_end, self.fragment_by_start[&f.start].clone());
+                    self.fragment_by_start.insert(f.start, Fragment { start: f.start, end: g_end, ring: f.ring.clone() });
+                    self.fragment_by_end.insert(g_end, Fragment { start: f.start, end: g_end, ring: f.ring });
                 }
             } else {
                 if let Some(a) = self.fragment_by_start.get_mut(&f.start) {
                     a.end = end_index;
-                    a.ring.push(vec![line[1][0] + x as f64, line[1][1] + y as f64]);
+                    a.ring.push(end.clone());
                 }
                 f.ring.push(end);
                 f.end = end_index;
@@ -292,24 +290,23 @@ impl IsoRingBuilder {
             let mut f = self.fragment_by_start.remove(&end_index).unwrap();
             if self.fragment_by_end.contains_key(&start_index) {
                 let (g_start, g_end) = get_start_end(&self.fragment_by_end, start_index);
-                let temp = self.fragment_by_end.remove(&g_end);
                 if f.end == g_end && f.start == g_start {
                     f.ring.push(end);
                     result.push(f.ring);
                 } else {
                     if start_index != g_end {
-                        let g = self.fragment_by_end.get(&start_index).unwrap();
-                        f.ring.extend(g.ring.iter().cloned());
-                    } else if let Some(_t) = temp {
+                        let g = self.fragment_by_end.remove(&start_index).unwrap();
+                        f.ring.extend(g.ring);
+                    } else if let Some(_t) = self.fragment_by_end.remove(&g_end) {
                         f.ring.extend(_t.ring);
                     }
-                    self.fragment_by_start.insert(g_start, Fragment { start: g_start, end: f.end, ring: f.ring });
-                    self.fragment_by_end.insert(f.end, self.fragment_by_start[&g_start].clone());
+                    self.fragment_by_start.insert(g_start, Fragment { start: g_start, end: f.end, ring: f.ring.clone() });
+                    self.fragment_by_end.insert(f.end, Fragment { start: f.start, end: g_end, ring: f.ring });
                 }
             } else {
                 if let Some(a) = self.fragment_by_end.get_mut(&f.end) {
                     a.start = start_index;
-                    a.ring.insert(0, vec![line[0][0] + x as f64, line[0][1] + y as f64]);
+                    a.ring.insert(0, start.clone());
                 }
                 f.ring.insert(0, start);
                 f.start = start_index;
@@ -323,7 +320,7 @@ impl IsoRingBuilder {
     }
 }
 
-fn get_start_end(map: &BTreeMap<usize, Fragment>, ix: usize) -> (usize, usize) {
+fn get_start_end(map: &FxHashMap<usize, Fragment>, ix: usize) -> (usize, usize) {
     let frag = map.get(&ix).unwrap();
     (frag.start, frag.end)
 }

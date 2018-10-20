@@ -7,6 +7,7 @@
 #[macro_use] extern crate lazy_static;
 extern crate geojson;
 extern crate serde_json;
+extern crate rustc_hash;
 
 mod area;
 mod contour;
