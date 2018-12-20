@@ -1,6 +1,6 @@
-use ::contour::{Pt, Ring};
+use ::contour::Pt;
 
-pub fn area(ring: &Ring) -> f64 {
+pub fn area(ring: &[Pt]) -> f64 {
     let mut i = 0;
     let n = ring.len() - 1;
     let mut area = ring[n - 1][1] * ring[0][0] - ring[n - 1][0] * ring[0][1];
@@ -11,7 +11,7 @@ pub fn area(ring: &Ring) -> f64 {
     area
 }
 
-pub fn contains(ring: &Ring, hole: &Ring) -> i32 {
+pub fn contains(ring: &[Pt], hole: &[Pt]) -> i32 {
     let mut i = 0;
     let n = hole.len();
     let mut c;
@@ -22,10 +22,10 @@ pub fn contains(ring: &Ring, hole: &Ring) -> i32 {
         }
         i += 1;
     }
-    return 0;
+    0
 }
 
-fn ring_contains(ring: &Ring, point: &Pt) -> i32 {
+fn ring_contains(ring: &[Pt], point: &[f64]) -> i32 {
     let x = point[0];
     let y = point[1];
     let n = ring.len();
@@ -41,15 +41,15 @@ fn ring_contains(ring: &Ring, point: &Pt) -> i32 {
         if segment_contains(&pi, &pj, point) {
             return 0;
         }
-        if ((yi > y) != (yj > y)) && ((x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
+        if ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi) {
             contains = -contains;
         }
         j = i;
     }
-    return contains;
+    contains
 }
 
-fn segment_contains(a: &Pt, b: &Pt, c: &Pt) -> bool {
+fn segment_contains(a: &[f64], b: &[f64], c: &[f64]) -> bool {
     if collinear(a, b, c) {
         if a[0] == b[0] {
             within(a[1], c[1], b[1])
@@ -61,9 +61,10 @@ fn segment_contains(a: &Pt, b: &Pt, c: &Pt) -> bool {
     }
 }
 
-fn collinear(a: &Pt, b: &Pt, c: &Pt) -> bool {
+fn collinear(a: &[f64], b: &[f64], c: &[f64]) -> bool {
     (b[0] - a[0]) * (c[1] - a[1]) == (c[0] - a[0]) * (b[1] - a[1])
 }
+
 
 fn within(p: f64, q: f64, r: f64) -> bool {
     p <= q && q <= r || r <= q && q <= p
