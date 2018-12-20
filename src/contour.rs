@@ -1,9 +1,10 @@
 use geojson::{Feature, Geometry};
 use geojson::Value::MultiPolygon;
+use lazy_static::lazy_static;
+use rustc_hash::FxHashMap;
 use serde_json::map::Map;
 use serde_json::to_value;
-use rustc_hash::FxHashMap;
-use ::area::{contains, area};
+use crate::area::{contains, area};
 
 pub type Pt = Vec<f64>;
 pub type Ring = Vec<Pt>;
@@ -57,7 +58,7 @@ impl ContourBuilder {
     /// * `smooth` - Whether or not the generated rings will be smoothed using linear interpolation.
     pub fn new(dx: u32, dy: u32, smooth: bool) -> Self {
         ContourBuilder {
-            dx: dx, dy: dy, smooth: smooth,
+            dx, dy, smooth,
         }
     }
 
@@ -74,11 +75,11 @@ impl ContourBuilder {
             let ix = (yt * dx + xt) as usize;
             if ix < len_values {
                 let v1 = values[ix];
-                if x > 0.0 && x < (dx as f64) && xt as f64 == x {
+                if x > 0.0 && x < (dx as f64) && (xt as f64 - x).abs() < std::f64::EPSILON {
                     v0 = values[(yt * dx + xt - 1) as usize];
                     point[0] = x + (value - v0) / (v1 - v0) - 0.5;
                 }
-                if y > 0.0 && y < (dy as f64) && yt as f64 == y {
+                if y > 0.0 && y < (dy as f64) && (yt as f64 - y).abs() < std::f64::EPSILON {
                     v0 = values[((yt - 1) * dx + xt) as usize];
                     point[1] = y + (value - v0) / (v1 - v0) - 0.5;
                 }
@@ -118,8 +119,7 @@ impl ContourBuilder {
         }).for_each(drop);
 
         holes.drain(..).map(|hole|{
-            for i in 0..polygons.len() {
-                let polygon = &mut polygons[i];
+            for polygon in &mut polygons {
                 if contains(&polygon[0], &hole) != -1 {
                     polygon.push(hole);
                     return;
@@ -251,11 +251,11 @@ impl IsoRingBuilder {
         result
     }
 
-    fn index(&self, point: &Pt) -> usize {
-      return (point[0] * 2.0 + point[1] * (self.dx as f64 + 1.) * 4.) as usize;
+    fn index(&self, point: &[f64]) -> usize {
+      (point[0] * 2.0 + point[1] * (self.dx as f64 + 1.) * 4.) as usize
     }
 
-    fn stitch(&mut self, line: &Vec<Vec<f64>>, x: i32, y: i32, result: &mut Vec<Ring>) {
+    fn stitch(&mut self, line: &[Vec<f64>], x: i32, y: i32, result: &mut Vec<Ring>) {
         let start = vec![line[0][0] + x as f64, line[0][1] + y as f64];
         let end = vec![line[1][0] + x as f64, line[1][1] + y as f64];
         let start_index = self.index(&start);

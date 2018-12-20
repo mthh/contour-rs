@@ -1,4 +1,4 @@
-use ::contour::Pt;
+use crate::contour::Pt;
 
 pub fn area(ring: &[Pt]) -> f64 {
     let mut i = 0;
@@ -51,7 +51,7 @@ fn ring_contains(ring: &[Pt], point: &[f64]) -> i32 {
 
 fn segment_contains(a: &[f64], b: &[f64], c: &[f64]) -> bool {
     if collinear(a, b, c) {
-        if a[0] == b[0] {
+        if (a[0] - b[0]).abs() < std::f64::EPSILON {
             within(a[1], c[1], b[1])
         } else {
             within(a[0], c[0], b[0])
@@ -62,7 +62,7 @@ fn segment_contains(a: &[f64], b: &[f64], c: &[f64]) -> bool {
 }
 
 fn collinear(a: &[f64], b: &[f64], c: &[f64]) -> bool {
-    (b[0] - a[0]) * (c[1] - a[1]) == (c[0] - a[0]) * (b[1] - a[1])
+    ((b[0] - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (b[1] - a[1])).abs() < std::f64::EPSILON
 }
 
 

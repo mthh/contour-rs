@@ -4,19 +4,14 @@
 //! Outputs ring coordinates or polygons contours as a Vec of GeoJSON Feature.
 //! This is a port of [d3-contour](https://github.com/d3/d3-contour/).
 
-#[macro_use] extern crate lazy_static;
-extern crate geojson;
-extern crate serde_json;
-extern crate rustc_hash;
-
 mod area;
 mod contour;
 
-pub use contour::{ContourBuilder, IsoRingBuilder};
+pub use crate::contour::{ContourBuilder, IsoRingBuilder};
 
 #[cfg(test)]
 mod tests {
-    use ::ContourBuilder;
+    use crate::ContourBuilder;
     use geojson;
 
     #[test]

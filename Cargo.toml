@@ -2,6 +2,7 @@
 name = "contour"
 version = "0.1.0"
 authors = ["Matthieu Viry <matthieu.viry@cnrs.fr>"]
+edition = "2018"
 
 [dependencies]
 geojson = "0.12"
