@@ -65,7 +65,6 @@ fn collinear(a: &[f64], b: &[f64], c: &[f64]) -> bool {
     ((b[0] - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (b[1] - a[1])).abs() < std::f64::EPSILON
 }
 
-
 fn within(p: f64, q: f64, r: f64) -> bool {
     p <= q && q <= r || r <= q && q <= p
 }
