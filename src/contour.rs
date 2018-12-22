@@ -5,6 +5,7 @@ use lazy_static::lazy_static;
 use rustc_hash::FxHashMap;
 use serde_json::map::Map;
 use serde_json::to_value;
+use slab::Slab;
 
 pub type Pt = Vec<f64>;
 pub type Ring = Vec<Pt>;
@@ -140,7 +141,7 @@ impl ContourBuilder {
             })
             .for_each(drop);
 
-        let mut properties = Map::new();
+        let mut properties = Map::with_capacity(1);
         properties.insert(String::from("value"), to_value(threshold).unwrap());
         Feature {
             geometry: Some(Geometry {
@@ -158,8 +159,9 @@ impl ContourBuilder {
 
 /// Isoring generator to compute marching squares with isolines stitched into rings.
 pub struct IsoRingBuilder {
-    fragment_by_start: FxHashMap<usize, Fragment>,
-    fragment_by_end: FxHashMap<usize, Fragment>,
+    fragment_by_start: FxHashMap<usize, usize>,
+    fragment_by_end: FxHashMap<usize, usize>,
+    f: Slab<Fragment>,
     dx: u32,
     dy: u32,
 }
@@ -174,8 +176,9 @@ impl IsoRingBuilder {
         IsoRingBuilder {
             fragment_by_start: FxHashMap::default(),
             fragment_by_end: FxHashMap::default(),
-            dx: dx,
-            dy: dy,
+            f: Slab::new(),
+            dx,
+            dy,
         }
     }
 
@@ -301,108 +304,91 @@ impl IsoRingBuilder {
         let start_index = self.index(&start);
         let end_index = self.index(&end);
         if self.fragment_by_end.contains_key(&start_index) {
-            let mut f = self.fragment_by_end.remove(&start_index).unwrap();
             if self.fragment_by_start.contains_key(&end_index) {
-                let (g_start, g_end) = get_start_end(&self.fragment_by_start, end_index);
-                if f.end == g_end && f.start == g_start {
+                let f_ix = self.fragment_by_end.remove(&start_index).unwrap();
+                let g_ix = self.fragment_by_start.remove(&end_index).unwrap();
+                if f_ix == g_ix {
+                    let mut f = self.f.remove(f_ix);
                     f.ring.push(end);
                     result.push(f.ring);
                 } else {
-                    if g_start != end_index {
-                        let g = self.fragment_by_start.remove(&end_index).unwrap();
-                        f.ring.extend(g.ring);
-                    } else if let Some(_t) = self.fragment_by_start.remove(&g_start) {
-                        f.ring.extend(_t.ring);
-                    }
+                    let mut f = self.f.remove(f_ix);
+                    let g = self.f.remove(g_ix);
+                    f.ring.extend(g.ring);
+                    let ix = self.f.insert(Fragment {
+                        start: f.start,
+                        end: g.end,
+                        ring: f.ring,
+                    });
                     self.fragment_by_start.insert(
                         f.start,
-                        Fragment {
-                            start: f.start,
-                            end: g_end,
-                            ring: f.ring.clone(),
-                        },
+                        ix,
                     );
                     self.fragment_by_end.insert(
-                        g_end,
-                        Fragment {
-                            start: f.start,
-                            end: g_end,
-                            ring: f.ring,
-                        },
+                        g.end,
+                        ix,
                     );
                 }
             } else {
-                if let Some(a) = self.fragment_by_start.get_mut(&f.start) {
-                    a.end = end_index;
-                    a.ring.push(end.clone());
-                }
+                let f_ix = self.fragment_by_end.remove(&start_index).unwrap();
+                let mut f = self.f.get_mut(f_ix).unwrap();
                 f.ring.push(end);
                 f.end = end_index;
-                self.fragment_by_end.insert(end_index, f);
+                self.fragment_by_end.insert(
+                    end_index,
+                    f_ix,
+                );
             }
         } else if self.fragment_by_start.contains_key(&end_index) {
-            let mut f = self.fragment_by_start.remove(&end_index).unwrap();
             if self.fragment_by_end.contains_key(&start_index) {
-                let (g_start, g_end) = get_start_end(&self.fragment_by_end, start_index);
-                if f.end == g_end && f.start == g_start {
+                let f_ix = self.fragment_by_start.remove(&end_index).unwrap();
+                let g_ix = self.fragment_by_end.remove(&start_index).unwrap();
+                if f_ix == g_ix {
+                    let mut f = self.f.remove(f_ix);
                     f.ring.push(end);
                     result.push(f.ring);
                 } else {
-                    if start_index != g_end {
-                        let g = self.fragment_by_end.remove(&start_index).unwrap();
-                        f.ring.extend(g.ring);
-                    } else if let Some(_t) = self.fragment_by_end.remove(&g_end) {
-                        f.ring.extend(_t.ring);
-                    }
+                    let f = self.f.remove(f_ix);
+                    let mut g = self.f.remove(g_ix);
+                    g.ring.extend(f.ring);
+                    let ix = self.f.insert(Fragment {
+                        start: g.start,
+                        end: f.end,
+                        ring: g.ring,
+                    });
                     self.fragment_by_start.insert(
-                        g_start,
-                        Fragment {
-                            start: g_start,
-                            end: f.end,
-                            ring: f.ring.clone(),
-                        },
+                        g.start,
+                        ix,
                     );
                     self.fragment_by_end.insert(
                         f.end,
-                        Fragment {
-                            start: f.start,
-                            end: g_end,
-                            ring: f.ring,
-                        },
+                        ix,
                     );
                 }
             } else {
-                if let Some(a) = self.fragment_by_end.get_mut(&f.end) {
-                    a.start = start_index;
-                    a.ring.insert(0, start.clone());
-                }
+                let f_ix = self.fragment_by_start.remove(&end_index).unwrap();
+                let mut f = self.f.get_mut(f_ix).unwrap();
                 f.ring.insert(0, start);
                 f.start = start_index;
-                self.fragment_by_start.insert(start_index, f);
+                self.fragment_by_start.insert(
+                    start_index,
+                    f_ix,
+                );
             }
         } else {
-            let a = vec![start, end];
+            let ix = self.f.insert(Fragment {
+                start: start_index,
+                end: end_index,
+                ring: vec![start, end],
+            });
             self.fragment_by_start.insert(
                 start_index,
-                Fragment {
-                    start: start_index,
-                    end: end_index,
-                    ring: a.clone(),
-                },
+                ix,
             );
             self.fragment_by_end.insert(
                 end_index,
-                Fragment {
-                    start: start_index,
-                    end: end_index,
-                    ring: a,
-                },
+                ix,
             );
         }
     }
-}
-
-fn get_start_end(map: &FxHashMap<usize, Fragment>, ix: usize) -> (usize, usize) {
-    let frag = map.get(&ix).unwrap();
-    (frag.start, frag.end)
 }
