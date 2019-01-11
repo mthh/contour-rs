@@ -1,13 +1,56 @@
 //! Computes isorings and contour polygons by applying
 //! [marching squares](https://en.wikipedia.org/wiki/Marching_squares)
 //! to a rectangular array of numeric values.
-//! Outputs ring coordinates or polygons contours as a Vec of GeoJSON Feature.
+//!
+//! Outputs ring coordinates (using [`contour_rings`]) or
+//! polygons contours (using [`ContourBuilder`]) as a Vec of GeoJSON Feature.
+//!
 //! This is a port of [d3-contour](https://github.com/d3/d3-contour/).
+//!
+//! #### Example:
+//! ```
+//! # use contour::ContourBuilder;
+//! let c = ContourBuilder::new(10, 10, false); // x dim., y dim., smoothing
+//! let res = c.contours(&vec![
+//!     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+//!     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+//!     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+//!     0., 0., 0., 1., 1., 1., 0., 0., 0., 0.,
+//!     0., 0., 0., 1., 1., 1., 0., 0., 0., 0.,
+//!     0., 0., 0., 1., 1., 1., 0., 0., 0., 0.,
+//!     0., 0., 0., 1., 1., 1., 0., 0., 0., 0.,
+//!     0., 0., 0., 1., 1., 1., 0., 0., 0., 0.,
+//!     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+//!     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
+//! ], &[0.5]); // values, thresholds
+//! ```
+//! __*Output:*__
+//! ```text
+//! [Feature {
+//!   bbox: None,
+//!   geometry: Some(Geometry {
+//!     bbox: None,
+//!     value: MultiPolygon([[[
+//!       [6., 7.5], [6., 6.5], [6., 5.5], [6., 4.5],
+//!       [6., 3.5], [5.5, 3.], [4.5, 3.], [3.5, 3.],
+//!       [3., 3.5], [3., 4.5], [3., 5.5], [3., 6.5],
+//!       [3., 7.5], [3.5, 8.], [4.5, 8.], [5.5, 8.],
+//!       [6., 7.5]]]]),
+//!     foreign_members: None
+//!     }),
+//!    id: None,
+//!    properties: Some({"value": Number(0.5)}),
+//!    foreign_members: None
+//!    }]
+//! ```
+//!
+//! [`contour_rings`]: fn.contour_rings.html
+//! [`ContourBuilder`]: struct.ContourBuilder.html
 
 mod area;
 mod contour;
 
-pub use crate::contour::{ContourBuilder, IsoRingBuilder};
+pub use crate::contour::{ContourBuilder, contour_rings};
 
 #[cfg(test)]
 mod tests {

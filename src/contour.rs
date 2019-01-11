@@ -45,10 +45,10 @@ struct Fragment {
 }
 
 /// Contours generator to
-/// be used on a rectangular `Vec` of values to
-/// get a `Vec` of Features of MultiPolygon (use [`IsoRingBuilder`] internally).
+/// be used on a rectangular `Slice` of values to
+/// get a `Vec` of Features of MultiPolygon (use [`contour_rings`] internally).
 ///
-/// [`IsoRingBuilder`]: struct.IsoRingBuilder.html
+/// [`contour_rings`]: fn.contour_rings.html
 pub struct ContourBuilder {
     dx: u32,
     dy: u32,
@@ -71,6 +71,7 @@ impl ContourBuilder {
         let dx = self.dx;
         let dy = self.dy;
         let len_values = values.len();
+
         ring.iter_mut()
             .map(|point| {
                 let x = point[0];
@@ -100,19 +101,18 @@ impl ContourBuilder {
     ///
     /// # Arguments
     ///
-    /// * `values` - ...
-    /// * `thresholds` - ...
+    /// * `values` - The slice of values to be used.
+    /// * `thresholds` - The slice of thresholds values to be used.
     pub fn contours(&self, values: &[f64], thresholds: &[f64]) -> Vec<Feature> {
+        let mut isoring = IsoRingBuilder::new(self.dx, self.dy);
         thresholds
             .iter()
-            .map(|value| self.contour(values, *value))
+            .map(|value| self.contour(values, *value, &mut isoring))
             .collect::<Vec<Feature>>()
     }
 
-    fn contour(&self, values: &[f64], threshold: f64) -> Feature {
-        let mut polygons = Vec::new();
-        let mut holes = Vec::new();
-        let mut isoring = IsoRingBuilder::new(self.dx, self.dy);
+    fn contour(&self, values: &[f64], threshold: f64, isoring: &mut IsoRingBuilder) -> Feature {
+        let (mut polygons, mut holes) = (Vec::new(), Vec::new());
         let mut result = isoring.compute(values, threshold);
 
         result
@@ -157,13 +157,29 @@ impl ContourBuilder {
     }
 }
 
+/// Computes isoring for the given `Slice` of `values` according to the `threshold` value
+/// (the inside of the isoring is the surface where input `values` are greater than or equal
+/// to the given threshold value).
+///
+/// # Arguments
+///
+/// * `values` - The slice of values to be used.
+/// * `threshold` - The threshold value.
+/// * `dx` - The number of columns in the grid.
+/// * `dy` - The number of rows in the grid.
+pub fn contour_rings(values: &[f64], threshold: f64, dx: u32, dy: u32) -> Vec<Ring> {
+    let mut isoring = IsoRingBuilder::new(dx, dy);
+    isoring.compute(values, threshold)
+}
+
 /// Isoring generator to compute marching squares with isolines stitched into rings.
-pub struct IsoRingBuilder {
+struct IsoRingBuilder {
     fragment_by_start: FxHashMap<usize, usize>,
     fragment_by_end: FxHashMap<usize, usize>,
     f: Slab<Fragment>,
     dx: u32,
     dy: u32,
+    is_empty: bool,
 }
 
 impl IsoRingBuilder {
@@ -179,6 +195,7 @@ impl IsoRingBuilder {
             f: Slab::new(),
             dx,
             dy,
+            is_empty: true,
         }
     }
 
@@ -188,9 +205,12 @@ impl IsoRingBuilder {
     ///
     /// # Arguments
     ///
-    /// * `values` - The number of columns in the grid.
-    /// * `threshold` - The number of rows in the grid.
+    /// * `values` - The slice of values to be used.
+    /// * `threshold` - The threshold value to use.
     pub fn compute(&mut self, values: &[f64], threshold: f64) -> Vec<Ring> {
+        if !self.is_empty {
+            self.clear();
+        }
         let mut result = Vec::new();
         let dx = self.dx as i32;
         let dy = self.dy as i32;
@@ -290,7 +310,7 @@ impl IsoRingBuilder {
                 self.stitch(&ring, x, y, &mut result);
             })
             .for_each(drop);
-
+        self.is_empty = false;
         result
     }
 
@@ -298,6 +318,7 @@ impl IsoRingBuilder {
         (point[0] * 2.0 + point[1] * (self.dx as f64 + 1.) * 4.) as usize
     }
 
+    // Stitchs segments to rings.
     fn stitch(&mut self, line: &[Vec<f64>], x: i32, y: i32, result: &mut Vec<Ring>) {
         let start = vec![line[0][0] + x as f64, line[0][1] + y as f64];
         let end = vec![line[1][0] + x as f64, line[1][1] + y as f64];
@@ -320,24 +341,15 @@ impl IsoRingBuilder {
                         end: g.end,
                         ring: f.ring,
                     });
-                    self.fragment_by_start.insert(
-                        f.start,
-                        ix,
-                    );
-                    self.fragment_by_end.insert(
-                        g.end,
-                        ix,
-                    );
+                    self.fragment_by_start.insert(f.start, ix);
+                    self.fragment_by_end.insert(g.end, ix);
                 }
             } else {
                 let f_ix = self.fragment_by_end.remove(&start_index).unwrap();
                 let mut f = self.f.get_mut(f_ix).unwrap();
                 f.ring.push(end);
                 f.end = end_index;
-                self.fragment_by_end.insert(
-                    end_index,
-                    f_ix,
-                );
+                self.fragment_by_end.insert(end_index, f_ix);
             }
         } else if self.fragment_by_start.contains_key(&end_index) {
             if self.fragment_by_end.contains_key(&start_index) {
@@ -356,24 +368,15 @@ impl IsoRingBuilder {
                         end: f.end,
                         ring: g.ring,
                     });
-                    self.fragment_by_start.insert(
-                        g.start,
-                        ix,
-                    );
-                    self.fragment_by_end.insert(
-                        f.end,
-                        ix,
-                    );
+                    self.fragment_by_start.insert(g.start, ix);
+                    self.fragment_by_end.insert(f.end, ix);
                 }
             } else {
                 let f_ix = self.fragment_by_start.remove(&end_index).unwrap();
                 let mut f = self.f.get_mut(f_ix).unwrap();
                 f.ring.insert(0, start);
                 f.start = start_index;
-                self.fragment_by_start.insert(
-                    start_index,
-                    f_ix,
-                );
+                self.fragment_by_start.insert(start_index, f_ix);
             }
         } else {
             let ix = self.f.insert(Fragment {
@@ -381,14 +384,15 @@ impl IsoRingBuilder {
                 end: end_index,
                 ring: vec![start, end],
             });
-            self.fragment_by_start.insert(
-                start_index,
-                ix,
-            );
-            self.fragment_by_end.insert(
-                end_index,
-                ix,
-            );
+            self.fragment_by_start.insert(start_index, ix);
+            self.fragment_by_end.insert(end_index, ix);
         }
+    }
+
+    pub fn clear(&mut self) {
+        self.f.clear();
+        self.fragment_by_end.clear();
+        self.fragment_by_start.clear();
+        self.is_empty = true;
     }
 }
