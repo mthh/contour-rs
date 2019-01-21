@@ -1,8 +1,16 @@
 [package]
 name = "contour"
 version = "0.1.0"
-authors = ["Matthieu Viry <matthieu.viry@cnrs.fr>"]
+authors = ["Matthieu Viry <matthieu.viry@univ-grenoble-alpes.fr>"]
 edition = "2018"
+
+description = "Compute isorings and contour polygons (using marching squares algorithm)."
+repository = "https://github.com/mthh/contour-rs"
+homepage = "https://github.com/mthh/contour-rs"
+documentation = "https://docs.rs/contour"
+readme = "README.md"
+keywords = ["contour", "polygon", "isoring", "marching-squares", "geojson"]
+license = "MIT/Apache-2.0"
 
 [dependencies]
 geojson = "0.13"
