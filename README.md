@@ -12,7 +12,7 @@ Outputs ring coordinates or polygons contours as a `Vec` of [GeoJSON](https://gi
 
 
 The API exposes:
-- a `countour_rings` function, which computes isorings coordinates for one threshold value (*returns a `Vec` of rings coordinates*).
+- a `contour_rings` function, which computes isorings coordinates for one threshold value (*returns a `Vec` of rings coordinates*).
 - a `ContourBuilder` struct, which computes isorings coordinates for a `Vec` of threshold values and transform them in `MultiPolygon`s (*returns a `Vec` of GeoJSON Features*).
 
 
