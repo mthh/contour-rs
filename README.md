@@ -10,14 +10,27 @@ Outputs ring coordinates or polygons contours as a `Vec` of [GeoJSON](https://gi
 
 <div style="text-align:center"><a href="https://mthh.github.io/wasm_demo_contour/"><img src ="https://raw.githubusercontent.com/mthh/contour-rs/master/illustration.png" /></a></div><br>
 
-Demo of `contour-rs` compiled to WebAssembly and used from JavaScript : [wasm_demo_contour](https://mthh.github.io/wasm_demo_contour/)
+### Usage
+
+Add this to your `Cargo.toml`:
+
+```toml
+[dependencies]
+contour = "0.1.0"
+```
+
+and this to your crate root:
+
+```rust
+extern crate contour;
+```
 
 The API exposes:
 - a `contour_rings` function, which computes isorings coordinates for one threshold value (*returns a `Vec` of rings coordinates*).
 - a `ContourBuilder` struct, which computes isorings coordinates for a `Vec` of threshold values and transform them in `MultiPolygon`s (*returns a `Vec` of GeoJSON Features*).
 
 
-#### Example:
+### Example:
 
 ```rust
 let c = ContourBuilder::new(10, 10, false); // x dim., y dim., smoothing
@@ -54,6 +67,9 @@ __*Output:*__
    }]
 ```
 
+### Demo
+
+Demo of this crate compiled to WebAssembly and used from JavaScript : [wasm_demo_contour](https://mthh.github.io/wasm_demo_contour/).
 
 ## License
 
