@@ -8,9 +8,9 @@ Computes *isorings* and __*contour polygons*__ by applying [marching squares](ht
 Outputs ring coordinates or polygons contours as a `Vec` of [GeoJSON](https://github.com/georust/rust-geojson) [Feature](https://docs.rs/geojson/0.13.0/geojson/struct.Feature.html)s.  
 *Note : This is a port of [d3-contour](https://github.com/d3/d3-contour).*  
 
-<div style="text-align:center"><img src ="https://raw.githubusercontent.com/mthh/contour-rs/master/illustration.png" /></div><br>
+<div style="text-align:center"><a href="https://mthh.github.io/wasm_demo_contour/"><img src ="https://raw.githubusercontent.com/mthh/contour-rs/master/illustration.png" /></a></div><br>
 
-
+Demo of `contour-rs` compiled to WebAssembly and used from JavaScript : [wasm_demo_contour](https://mthh.github.io/wasm_demo_contour/)
 
 The API exposes:
 - a `contour_rings` function, which computes isorings coordinates for one threshold value (*returns a `Vec` of rings coordinates*).
