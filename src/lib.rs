@@ -49,6 +49,7 @@
 
 mod area;
 mod contour;
+mod error;
 
 pub use crate::contour::{ContourBuilder, contour_rings};
 
@@ -71,8 +72,7 @@ mod tests {
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
-            0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-        ], &[0.5]);
+        ], &[0.5]).unwrap();
         match res[0].clone().geometry.unwrap().value {
             geojson::Value::MultiPolygon(p) => {
                 assert!(p.is_empty());
@@ -95,7 +95,7 @@ mod tests {
             0., 0., 0., 1., 1., 1., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-        ], &[0.5]);
+        ], &[0.5]).unwrap();
         match res[0].clone().geometry.unwrap().value {
             geojson::Value::MultiPolygon(p) => {
                 assert_eq!(
@@ -125,7 +125,7 @@ mod tests {
             0., 0., 0., 1., 1., 1., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-        ], &[0.5]);
+        ], &[0.5]).unwrap();
         match res[0].clone().geometry.unwrap().value {
             geojson::Value::MultiPolygon(p) => {
                 assert_eq!(
@@ -167,7 +167,7 @@ mod tests {
             0., 0., 0., 1., 1., 0., 1., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-        ], &[0.5]);
+        ], &[0.5]).unwrap();
         match res[0].clone().geometry.unwrap().value {
             geojson::Value::MultiPolygon(p) => {
                 assert_eq!(
@@ -211,7 +211,7 @@ mod tests {
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-        ], &[0.5]);
+        ], &[0.5]).unwrap();
         match res[0].clone().geometry.unwrap().value {
             geojson::Value::MultiPolygon(p) => {
                 assert_eq!(
@@ -262,7 +262,7 @@ mod tests {
             0., 0., 0., 2., 1., 2., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-        ], &[0.5]);
+        ], &[0.5]).unwrap();
         match res[0].clone().geometry.unwrap().value {
             geojson::Value::MultiPolygon(p) => {
                 assert_eq!(
@@ -298,7 +298,7 @@ mod tests {
             0., 0., 0., 1., 1., 1., 1., 0., 0., 0.,
             0., 0., 0., 1., 1., 1., 1., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-        ], &[0.5, 1.5]);
+        ], &[0.5, 1.5]).unwrap();
         match res[0].clone().geometry.unwrap().value {
             geojson::Value::MultiPolygon(p) => {
                 assert_eq!(
