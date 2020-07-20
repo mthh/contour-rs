@@ -1,7 +1,6 @@
 use std::error::Error as StdError;
 use std::fmt;
 use std::result;
-use std::str;
 
 /// A crate private constructor for `Error`.
 pub(crate) fn new_error(kind: ErrorKind) -> Error {
@@ -44,16 +43,7 @@ impl From<serde_json::error::Error> for Error {
 }
 
 impl StdError for Error {
-    fn description(&self) -> &str {
-        match *self.0 {
-            ErrorKind::JsonError(ref err) => err.description(),
-            ErrorKind::BadDimension => "The length of provided values doesn't match the (dx, dy) dimensions of the grid",
-            ErrorKind::Unexpected => "Unexpected error while computing contours",
-            _ => unreachable!(),
-        }
-    }
-
-    fn cause(&self) -> Option<&dyn StdError> {
+    fn source(&self) -> Option<&(dyn StdError + 'static)> {
         match *self.0 {
             ErrorKind::JsonError(ref err) => Some(err),
             ErrorKind::BadDimension => None,
