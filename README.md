@@ -16,7 +16,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-contour = "0.4.0"
+contour = "0.5.0"
 ```
 
 and this to your crate root:
