@@ -1,6 +1,6 @@
 # contour-rs
 
-[![Build Status Travis](https://travis-ci.org/mthh/contour-rs.svg?branch=master)](https://travis-ci.org/mthh/contour-rs)
+[![Build status GitHub Actions](https://github.com/mthh/contour-rs/actions/workflows/build_test_ubuntu.yml/badge.svg)](https://github.com/mthh/contour-rs/actions/workflows/build_test_ubuntu.yml)
 [![Build status Appveyor](https://ci.appveyor.com/api/projects/status/uemh49tq7vy4uke6?svg=true)](https://ci.appveyor.com/project/mthh/contour-rs)
 [![Docs.rs version](https://docs.rs/contour/badge.svg)](https://docs.rs/contour/)
 
