@@ -9,7 +9,6 @@ jobs:
           - stable
           - beta
           - nightly
-          - 1.56.0  # MSRV for geo-types (on which geojson depends)
     steps:
       - uses: actions/checkout@v2
 
