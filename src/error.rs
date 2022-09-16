@@ -28,12 +28,11 @@ impl Error {
 
 /// The specific type of an error.
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum ErrorKind {
     BadDimension,
     JsonError(serde_json::error::Error),
     Unexpected,
-    #[doc(hidden)]
-    __Nonexhaustive,
 }
 
 impl From<serde_json::error::Error> for Error {
@@ -48,7 +47,6 @@ impl StdError for Error {
             ErrorKind::JsonError(ref err) => Some(err),
             ErrorKind::BadDimension => None,
             ErrorKind::Unexpected => None,
-            _ => unreachable!(),
         }
     }
 }
@@ -57,9 +55,11 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self.0 {
             ErrorKind::JsonError(ref err) => err.fmt(f),
-            ErrorKind::BadDimension => write!(f, "The length of provided values doesn't match the (dx, dy) dimensions of the grid"),
+            ErrorKind::BadDimension => write!(
+                f,
+                "The length of provided values doesn't match the (dx, dy) dimensions of the grid"
+            ),
             ErrorKind::Unexpected => write!(f, "Unexpected error while computing contours"),
-            _ => unreachable!(),
         }
     }
 }

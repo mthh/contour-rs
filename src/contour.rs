@@ -1,5 +1,5 @@
 use crate::area::{area, contains};
-use crate::error::{ErrorKind, Result, new_error};
+use crate::error::{new_error, ErrorKind, Result};
 use geojson::Value::MultiPolygon;
 use geojson::{Feature, Geometry};
 use lazy_static::lazy_static;
@@ -12,6 +12,7 @@ pub type Pt = Vec<f64>;
 pub type Ring = Vec<Pt>;
 
 lazy_static! {
+    #[rustfmt::skip]
     static ref CASES: Vec<Vec<Vec<Vec<f64>>>> = vec![
         vec![],
         vec![vec![vec![1.0, 1.5], vec![0.5, 1.0]]],
@@ -115,7 +116,12 @@ impl ContourBuilder {
             .collect::<Result<Vec<Feature>>>()
     }
 
-    fn contour(&self, values: &[f64], threshold: f64, isoring: &mut IsoRingBuilder) -> Result<Feature> {
+    fn contour(
+        &self,
+        values: &[f64],
+        threshold: f64,
+        isoring: &mut IsoRingBuilder,
+    ) -> Result<Feature> {
         let (mut polygons, mut holes) = (Vec::new(), Vec::new());
         let mut result = isoring.compute(values, threshold)?;
 
@@ -216,11 +222,9 @@ impl IsoRingBuilder {
             ($ix:expr, $x:ident, $y:ident, $result:expr) => {
                 CASES[$ix]
                     .iter()
-                    .map(|ring| {
-                        self.stitch(&ring, $x, $y, $result)
-                    })
+                    .map(|ring| self.stitch(&ring, $x, $y, $result))
                     .collect::<Result<Vec<()>>>()?;
-            }
+            };
         }
 
         if !self.is_empty {
@@ -246,7 +250,7 @@ impl IsoRingBuilder {
             case_stitch!((t0 | t1 << 1) as usize, x, y, &mut result);
             x += 1;
         }
-        case_stitch!((t1 << 0) as usize, x, y, &mut result);
+        case_stitch!(t1 as usize, x, y, &mut result);
 
         // General case for the intermediate rows.
         y += 1;
@@ -261,7 +265,12 @@ impl IsoRingBuilder {
                 t1 = (values[(y * dx + dx + x + 1) as usize] >= threshold) as u32;
                 t3 = t2;
                 t2 = (values[(y * dx + x + 1) as usize] >= threshold) as u32;
-                case_stitch!((t0 | t1 << 1 | t2 << 2 | t3 << 3) as usize, x, y, &mut result);
+                case_stitch!(
+                    (t0 | t1 << 1 | t2 << 2 | t3 << 3) as usize,
+                    x,
+                    y,
+                    &mut result
+                );
                 x += 1;
             }
             case_stitch!((t1 | t2 << 3) as usize, x, y, &mut result);
@@ -296,8 +305,14 @@ impl IsoRingBuilder {
         let end_index = self.index(&end);
         if self.fragment_by_end.contains_key(&start_index) {
             if self.fragment_by_start.contains_key(&end_index) {
-                let f_ix = self.fragment_by_end.remove(&start_index).ok_or(new_error(ErrorKind::Unexpected))?;
-                let g_ix = self.fragment_by_start.remove(&end_index).ok_or(new_error(ErrorKind::Unexpected))?;
+                let f_ix = self
+                    .fragment_by_end
+                    .remove(&start_index)
+                    .ok_or_else(|| new_error(ErrorKind::Unexpected))?;
+                let g_ix = self
+                    .fragment_by_start
+                    .remove(&end_index)
+                    .ok_or_else(|| new_error(ErrorKind::Unexpected))?;
                 if f_ix == g_ix {
                     let mut f = self.f.remove(f_ix);
                     f.ring.push(end);
@@ -315,16 +330,28 @@ impl IsoRingBuilder {
                     self.fragment_by_end.insert(g.end, ix);
                 }
             } else {
-                let f_ix = self.fragment_by_end.remove(&start_index).ok_or(new_error(ErrorKind::Unexpected))?;
-                let mut f = self.f.get_mut(f_ix).ok_or(new_error(ErrorKind::Unexpected))?;
+                let f_ix = self
+                    .fragment_by_end
+                    .remove(&start_index)
+                    .ok_or_else(|| new_error(ErrorKind::Unexpected))?;
+                let mut f = self
+                    .f
+                    .get_mut(f_ix)
+                    .ok_or_else(|| new_error(ErrorKind::Unexpected))?;
                 f.ring.push(end);
                 f.end = end_index;
                 self.fragment_by_end.insert(end_index, f_ix);
             }
         } else if self.fragment_by_start.contains_key(&end_index) {
             if self.fragment_by_end.contains_key(&start_index) {
-                let f_ix = self.fragment_by_start.remove(&end_index).ok_or(new_error(ErrorKind::Unexpected))?;
-                let g_ix = self.fragment_by_end.remove(&start_index).ok_or(new_error(ErrorKind::Unexpected))?;
+                let f_ix = self
+                    .fragment_by_start
+                    .remove(&end_index)
+                    .ok_or_else(|| new_error(ErrorKind::Unexpected))?;
+                let g_ix = self
+                    .fragment_by_end
+                    .remove(&start_index)
+                    .ok_or_else(|| new_error(ErrorKind::Unexpected))?;
                 if f_ix == g_ix {
                     let mut f = self.f.remove(f_ix);
                     f.ring.push(end);
@@ -342,8 +369,14 @@ impl IsoRingBuilder {
                     self.fragment_by_end.insert(f.end, ix);
                 }
             } else {
-                let f_ix = self.fragment_by_start.remove(&end_index).ok_or(new_error(ErrorKind::Unexpected))?;
-                let mut f = self.f.get_mut(f_ix).ok_or(new_error(ErrorKind::Unexpected))?;
+                let f_ix = self
+                    .fragment_by_start
+                    .remove(&end_index)
+                    .ok_or_else(|| new_error(ErrorKind::Unexpected))?;
+                let mut f = self
+                    .f
+                    .get_mut(f_ix)
+                    .ok_or_else(|| new_error(ErrorKind::Unexpected))?;
                 f.ring.insert(0, start);
                 f.start = start_index;
                 self.fragment_by_start.insert(start_index, f_ix);

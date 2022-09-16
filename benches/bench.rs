@@ -2,10 +2,11 @@
 extern crate contour;
 extern crate test;
 
-use contour::ContourBuilder;
 use contour::contour_rings;
+use contour::ContourBuilder;
 use test::{black_box, Bencher};
 
+#[rustfmt::skip]
 static VALUES: [f64; 110] = [
     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
@@ -20,6 +21,7 @@ static VALUES: [f64; 110] = [
     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
 ];
 
+#[rustfmt::skip]
 static VALUES2: [f64; 238] = [
     0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
     0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 3., 3., 0., 0.,

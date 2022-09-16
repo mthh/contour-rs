@@ -38,7 +38,7 @@ fn ring_contains(ring: &[Pt], point: &[f64]) -> i32 {
         let pj = &ring[j];
         let xj = pj[0];
         let yj = pj[1];
-        if segment_contains(&pi, &pj, point) {
+        if segment_contains(pi, pj, point) {
             return 0;
         }
         if ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi) {
