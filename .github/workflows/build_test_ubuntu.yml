@@ -1,0 +1,9 @@
+on: [push, pull_request]
+name: Run tests on ubuntu
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: cargo build --verbose
+      - run: cargo test --verbose
