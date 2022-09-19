@@ -49,6 +49,16 @@ fn bench_build_geojson_contours_multiple_thresholds(b: &mut Bencher) {
 }
 
 #[bench]
+fn bench_build_geojson_contours_multiple_thresholds_and_x_y_steps_and_origins(b: &mut Bencher) {
+    let c = ContourBuilder::new(14, 17, true)
+        .x_step(0.5)
+        .y_step(0.5)
+        .x_origin(0.25)
+        .y_origin(0.25);
+    b.iter(|| black_box(c.contours(&VALUES2, &[0.5, 1.5, 2.5])));
+}
+
+#[bench]
 fn bench_build_geojson_contour(b: &mut Bencher) {
     let c = ContourBuilder::new(10, 11, true);
     b.iter(|| black_box(c.contours(&VALUES, &[0.5])));

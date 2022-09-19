@@ -46,19 +46,33 @@ struct Fragment {
     ring: Ring,
 }
 
-/// Contours generator to
+/// Contours generator, using builder pattern, to
 /// be used on a rectangular `Slice` of values to
 /// get a `Vec` of Features of MultiPolygon (use [`contour_rings`] internally).
 ///
 /// [`contour_rings`]: fn.contour_rings.html
 pub struct ContourBuilder {
+    /// The number of columns in the grid
     dx: u32,
+    /// The number of rows in the grid
     dy: u32,
+    /// Whether to smooth the contours
     smooth: bool,
+    /// The horizontal coordinate for the origin of the grid.
+    x_origin: f64,
+    /// The vertical coordinate for the origin of the grid.
+    y_origin: f64,
+    /// The horizontal step for the grid
+    x_step: f64,
+    /// The vertical step for the grid
+    y_step: f64,
 }
 
 impl ContourBuilder {
     /// Constructs a new contours generator for a grid with `dx` * `dy` dimension.
+    /// Set `smooth` to true to smooth the contour lines.
+    ///
+    /// By default, `x_origin` and `y_origin` are set to `0.0`, and `x_step` and `y_step` to `1.0`.
     ///
     /// # Arguments
     ///
@@ -66,7 +80,31 @@ impl ContourBuilder {
     /// * `dy` - The number of rows in the grid.
     /// * `smooth` - Whether or not the generated rings will be smoothed using linear interpolation.
     pub fn new(dx: u32, dy: u32, smooth: bool) -> Self {
-        ContourBuilder { dx, dy, smooth }
+        ContourBuilder { dx, dy, smooth, x_origin: 0f64, y_origin: 0f64, x_step: 1f64, y_step: 1f64 }
+    }
+
+    /// Sets the x origin of the grid.
+    pub fn x_origin(mut self, x_origin: impl Into<f64>) -> Self {
+        self.x_origin = x_origin.into();
+        self
+    }
+
+    /// Sets the y origin of the grid.
+    pub fn y_origin(mut self, y_origin: impl Into<f64>) -> Self {
+        self.y_origin = y_origin.into();
+        self
+    }
+
+    /// Sets the x step of the grid.
+    pub fn x_step(mut self, x_step: impl Into<f64>) -> Self {
+        self.x_step = x_step.into();
+        self
+    }
+
+    /// Sets the y step of the grid.
+    pub fn y_step(mut self, y_step: impl Into<f64>) -> Self {
+        self.y_step = y_step.into();
+        self
     }
 
     fn smoooth_linear(&self, ring: &mut Ring, values: &[f64], value: f64) {
@@ -98,7 +136,7 @@ impl ContourBuilder {
     }
 
     /// Computes contours according the given input `values` and the given `thresholds`.
-    /// Returns a `Vec` of Features of MultiPolygon.
+    /// Returns a `Vec` of GeoJSON Features of MultiPolygon.
     /// The threshold value of each Feature is stored in its `value` property.
     ///
     /// # Arguments
@@ -128,8 +166,18 @@ impl ContourBuilder {
         result
             .drain(..)
             .map(|mut ring| {
+                // Smooth the ring if needed
                 if self.smooth {
                     self.smoooth_linear(&mut ring, values, threshold);
+                }
+                // Compute the polygon coordinates according to the grid properties if needed
+                if (self.x_origin, self.y_origin) != (0f64, 0f64) || (self.x_step, self.y_step) != (1f64, 1f64) {
+                    ring.iter_mut()
+                        .map(|point| {
+                            point[0] = point[0] * self.x_step + self.x_origin;
+                            point[1] = point[1] * self.y_step + self.y_origin;
+                        })
+                        .for_each(drop);
                 }
                 if area(&ring) > 0.0 {
                     polygons.push(vec![ring]);
