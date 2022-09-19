@@ -80,7 +80,15 @@ impl ContourBuilder {
     /// * `dy` - The number of rows in the grid.
     /// * `smooth` - Whether or not the generated rings will be smoothed using linear interpolation.
     pub fn new(dx: u32, dy: u32, smooth: bool) -> Self {
-        ContourBuilder { dx, dy, smooth, x_origin: 0f64, y_origin: 0f64, x_step: 1f64, y_step: 1f64 }
+        ContourBuilder {
+            dx,
+            dy,
+            smooth,
+            x_origin: 0f64,
+            y_origin: 0f64,
+            x_step: 1f64,
+            y_step: 1f64,
+        }
     }
 
     /// Sets the x origin of the grid.
@@ -171,7 +179,9 @@ impl ContourBuilder {
                     self.smoooth_linear(&mut ring, values, threshold);
                 }
                 // Compute the polygon coordinates according to the grid properties if needed
-                if (self.x_origin, self.y_origin) != (0f64, 0f64) || (self.x_step, self.y_step) != (1f64, 1f64) {
+                if (self.x_origin, self.y_origin) != (0f64, 0f64)
+                    || (self.x_step, self.y_step) != (1f64, 1f64)
+                {
                     ring.iter_mut()
                         .map(|point| {
                             point[0] = point[0] * self.x_step + self.x_origin;
