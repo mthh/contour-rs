@@ -5,7 +5,7 @@
 [![Docs.rs version](https://docs.rs/contour/badge.svg)](https://docs.rs/contour/)
 
 Computes *isorings* and __*contour polygons*__ by applying [marching squares](https://en.wikipedia.org/wiki/Marching_squares) to a rectangular array of numeric values.  
-Outputs ring coordinates or polygons contours as a `Vec` of [GeoJSON](https://github.com/georust/rust-geojson) [Feature](https://docs.rs/geojson/0.13.0/geojson/struct.Feature.html)s.  
+Outputs ring coordinates or polygons contours as a `Vec` of [GeoJSON](https://github.com/georust/rust-geojson) [Feature](https://docs.rs/geojson/latest/geojson/struct.Feature.html)s.  
 *Note : This is a port of [d3-contour](https://github.com/d3/d3-contour).*  
 
 <div style="text-align:center"><a href="https://mthh.github.io/wasm_demo_contour/"><img src ="https://raw.githubusercontent.com/mthh/contour-rs/master/illustration.png" /></a></div><br>
