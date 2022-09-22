@@ -1,14 +1,11 @@
 use crate::area::{area, contains};
 use crate::error::{new_error, ErrorKind, Result};
-use geojson::Value::MultiPolygon;
-use geojson::{Feature, Geometry};
+use geo_types::{LineString, MultiPolygon, Polygon};
 use lazy_static::lazy_static;
 use rustc_hash::FxHashMap;
-use serde_json::map::Map;
-use serde_json::to_value;
 use slab::Slab;
 
-pub type Pt = Vec<f64>;
+pub type Pt = geo_types::Coordinate;
 pub type Ring = Vec<Pt>;
 
 lazy_static! {
@@ -48,7 +45,7 @@ struct Fragment {
 
 /// Contours generator, using builder pattern, to
 /// be used on a rectangular `Slice` of values to
-/// get a `Vec` of Features of MultiPolygon (use [`contour_rings`] internally).
+/// get a `Vec` of [`Contour`] (uses [`contour_rings`] internally).
 ///
 /// [`contour_rings`]: fn.contour_rings.html
 pub struct ContourBuilder {
@@ -122,8 +119,8 @@ impl ContourBuilder {
 
         ring.iter_mut()
             .map(|point| {
-                let x = point[0];
-                let y = point[1];
+                let x = point.x;
+                let y = point.y;
                 let xt = x.trunc() as u32;
                 let yt = y.trunc() as u32;
                 let mut v0;
@@ -132,11 +129,11 @@ impl ContourBuilder {
                     let v1 = values[ix];
                     if x > 0.0 && x < (dx as f64) && (xt as f64 - x).abs() < std::f64::EPSILON {
                         v0 = values[(yt * dx + xt - 1) as usize];
-                        point[0] = x + (value - v0) / (v1 - v0) - 0.5;
+                        point.x = x + (value - v0) / (v1 - v0) - 0.5;
                     }
                     if y > 0.0 && y < (dy as f64) && (yt as f64 - y).abs() < std::f64::EPSILON {
                         v0 = values[((yt - 1) * dx + xt) as usize];
-                        point[1] = y + (value - v0) / (v1 - v0) - 0.5;
+                        point.y = y + (value - v0) / (v1 - v0) - 0.5;
                     }
                 }
             })
@@ -151,15 +148,15 @@ impl ContourBuilder {
     ///
     /// * `values` - The slice of values to be used.
     /// * `thresholds` - The slice of thresholds values to be used.
-    pub fn contours(&self, values: &[f64], thresholds: &[f64]) -> Result<Vec<Feature>> {
+    pub fn contours(&self, values: &[f64], thresholds: &[f64]) -> Result<Vec<Contour>> {
         if values.len() as u32 != self.dx * self.dy {
             return Err(new_error(ErrorKind::BadDimension));
         }
         let mut isoring = IsoRingBuilder::new(self.dx, self.dy);
         thresholds
             .iter()
-            .map(|value| self.contour(values, *value, &mut isoring))
-            .collect::<Result<Vec<Feature>>>()
+            .map(|threshold| self.contour(values, *threshold, &mut isoring))
+            .collect()
     }
 
     fn contour(
@@ -167,7 +164,7 @@ impl ContourBuilder {
         values: &[f64],
         threshold: f64,
         isoring: &mut IsoRingBuilder,
-    ) -> Result<Feature> {
+    ) -> Result<Contour> {
         let (mut polygons, mut holes) = (Vec::new(), Vec::new());
         let mut result = isoring.compute(values, threshold)?;
 
@@ -184,15 +181,15 @@ impl ContourBuilder {
                 {
                     ring.iter_mut()
                         .map(|point| {
-                            point[0] = point[0] * self.x_step + self.x_origin;
-                            point[1] = point[1] * self.y_step + self.y_origin;
+                            point.x = point.x * self.x_step + self.x_origin;
+                            point.y = point.y * self.y_step + self.y_origin;
                         })
                         .for_each(drop);
                 }
                 if area(&ring) > 0.0 {
-                    polygons.push(vec![ring]);
+                    polygons.push(Polygon::new(LineString::new(ring), vec![]))
                 } else {
-                    holes.push(ring);
+                    holes.push(LineString::new(ring));
                 }
             })
             .for_each(drop);
@@ -201,27 +198,84 @@ impl ContourBuilder {
             .drain(..)
             .map(|hole| {
                 for polygon in &mut polygons {
-                    if contains(&polygon[0], &hole) != -1 {
-                        polygon.push(hole);
+                    if contains(&polygon.exterior().0, &hole.0) != -1 {
+                        polygon.interiors_push(hole);
                         return;
                     }
                 }
             })
             .for_each(drop);
 
-        let mut properties = Map::with_capacity(1);
-        properties.insert(String::from("value"), to_value(threshold)?);
-        Ok(Feature {
-            geometry: Some(Geometry {
-                value: MultiPolygon(polygons),
-                bbox: None,
-                foreign_members: None,
-            }),
-            properties: Some(properties),
-            bbox: None,
-            id: None,
-            foreign_members: None,
+        Ok(Contour {
+            geometry: MultiPolygon(polygons),
+            threshold,
         })
+    }
+}
+
+/// A contour has the geometry and threshold of a contour ring, built by [`ContourBuilder`].
+#[derive(Debug, Clone)]
+pub struct Contour {
+    geometry: MultiPolygon,
+    threshold: f64,
+}
+
+impl Contour {
+    /// Borrow the [`MultiPolygon`](geo_types::MultiPolygon) geometry of this contour.
+    pub fn geometry(&self) -> &MultiPolygon {
+        &self.geometry
+    }
+
+    /// Get the owned polygons and threshold of this countour.
+    pub fn into_inner(self) -> (MultiPolygon, f64) {
+        (self.geometry, self.threshold)
+    }
+
+    /// Get the threshold used to construct this contour.
+    pub fn threshold(&self) -> f64 {
+        self.threshold
+    }
+
+    #[cfg(feature = "geojson")]
+    /// Convert the contour to a struct from the `geojson` crate.
+    ///
+    /// To get a string reresentation, call to_geojson().to_string().
+    /// ```
+    /// use contour::ContourBuilder;
+    ///
+    /// let builder = ContourBuilder::new(10, 10, false);
+    /// # #[rustfmt::skip]
+    /// let contours = builder.contours(&[
+    /// // ...ellided for brevity
+    /// #     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+    /// #     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+    /// #     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+    /// #     0., 0., 0., 2., 1., 2., 0., 0., 0., 0.,
+    /// #     0., 0., 0., 2., 2., 2., 0., 0., 0., 0.,
+    /// #     0., 0., 0., 1., 2., 1., 0., 0., 0., 0.,
+    /// #     0., 0., 0., 2., 2., 2., 0., 0., 0., 0.,
+    /// #     0., 0., 0., 2., 1., 2., 0., 0., 0., 0.,
+    /// #     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+    /// #     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
+    /// ], &[0.5]).unwrap();
+    ///
+    /// let geojson_string = contours[0].to_geojson().to_string();
+    ///
+    /// assert_eq!(&geojson_string[0..27], r#"{"geometry":{"coordinates":"#);
+    /// ```
+    pub fn to_geojson(&self) -> geojson::Feature {
+        let mut properties = geojson::JsonObject::with_capacity(1);
+        // REVIEW: This maintains existing behavior, but should we rename
+        // `value` to something more explicable, like `threshold`?
+        properties.insert("value".to_string(), self.threshold.into());
+
+        geojson::Feature {
+            bbox: None,
+            geometry: Some(geojson::Geometry::from(self.geometry())),
+            id: None,
+            properties: Some(properties),
+            foreign_members: None,
+        }
     }
 }
 
@@ -351,14 +405,20 @@ impl IsoRingBuilder {
         Ok(result)
     }
 
-    fn index(&self, point: &[f64]) -> usize {
-        (point[0] * 2.0 + point[1] * (self.dx as f64 + 1.) * 4.) as usize
+    fn index(&self, point: &Pt) -> usize {
+        (point.x * 2.0 + point.y * (self.dx as f64 + 1.) * 4.) as usize
     }
 
     // Stitchs segments to rings.
     fn stitch(&mut self, line: &[Vec<f64>], x: i32, y: i32, result: &mut Vec<Ring>) -> Result<()> {
-        let start = vec![line[0][0] + x as f64, line[0][1] + y as f64];
-        let end = vec![line[1][0] + x as f64, line[1][1] + y as f64];
+        let start = Pt {
+            x: line[0][0] + x as f64,
+            y: line[0][1] + y as f64,
+        };
+        let end = Pt {
+            x: line[1][0] + x as f64,
+            y: line[1][1] + y as f64,
+        };
         let start_index = self.index(&start);
         let end_index = self.index(&end);
         if self.fragment_by_end.contains_key(&start_index) {
@@ -456,5 +516,56 @@ impl IsoRingBuilder {
         self.fragment_by_end.clear();
         self.fragment_by_start.clear();
         self.is_empty = true;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    #[cfg(feature = "geojson")]
+    #[test]
+    fn test_simple_polygon_no_smoothing_geojson() {
+        use super::*;
+        let c = ContourBuilder::new(10, 10, false);
+        #[rustfmt::skip]
+        let res = c.contours(&[
+            0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+            0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+            0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+            0., 0., 0., 2., 1., 2., 0., 0., 0., 0.,
+            0., 0., 0., 2., 2., 2., 0., 0., 0., 0.,
+            0., 0., 0., 1., 2., 1., 0., 0., 0., 0.,
+            0., 0., 0., 2., 2., 2., 0., 0., 0., 0.,
+            0., 0., 0., 2., 1., 2., 0., 0., 0., 0.,
+            0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+            0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
+        ], &[0.5]).unwrap();
+        match res[0].to_geojson().geometry.unwrap().value {
+            geojson::Value::MultiPolygon(p) => {
+                assert_eq!(
+                    p,
+                    vec![vec![vec![
+                        vec![6., 7.5],
+                        vec![6., 6.5],
+                        vec![6., 5.5],
+                        vec![6., 4.5],
+                        vec![6., 3.5],
+                        vec![5.5, 3.],
+                        vec![4.5, 3.],
+                        vec![3.5, 3.],
+                        vec![3., 3.5],
+                        vec![3., 4.5],
+                        vec![3., 5.5],
+                        vec![3., 6.5],
+                        vec![3., 7.5],
+                        vec![3.5, 8.],
+                        vec![4.5, 8.],
+                        vec![5.5, 8.],
+                        vec![6., 7.5],
+                    ]]]
+                );
+            }
+            _ => panic!(""),
+        };
     }
 }
