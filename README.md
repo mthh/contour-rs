@@ -107,7 +107,6 @@ let res = c.contours(&[
 println!("{:?}", res[0].to_geojson()); // prints the GeoJSON representation of the first contour
 ```
 
-```rust
 __*Output:*__
 ```rust
 Feature {

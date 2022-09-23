@@ -5,6 +5,8 @@
 - Make geojson optional, use geo-types for geometry representation
   (thanks to @michaelkirk, see #5 and #6 for details).
 
+- Rename the "value" field to "threshold" in the GeoJSON representation.
+
 - Add `x_origin`, `y_origin`, `x_step` and `y_step`
   attributes to `ContourBuilder` struct. They can be set using the *builder pattern*, before calling
   the `contours` method.
