@@ -239,7 +239,7 @@ impl Contour {
     #[cfg(feature = "geojson")]
     /// Convert the contour to a struct from the `geojson` crate.
     ///
-    /// To get a string reresentation, call to_geojson().to_string().
+    /// To get a string representation, call to_geojson().to_string().
     /// ```
     /// use contour::ContourBuilder;
     ///
