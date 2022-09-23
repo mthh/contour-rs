@@ -265,9 +265,7 @@ impl Contour {
     /// ```
     pub fn to_geojson(&self) -> geojson::Feature {
         let mut properties = geojson::JsonObject::with_capacity(1);
-        // REVIEW: This maintains existing behavior, but should we rename
-        // `value` to something more explicable, like `threshold`?
-        properties.insert("value".to_string(), self.threshold.into());
+        properties.insert("threshold".to_string(), self.threshold.into());
 
         geojson::Feature {
             bbox: None,

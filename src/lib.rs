@@ -38,7 +38,7 @@
 //!       [6., 7.5]
 //!     ]]],
 //!   },
-//!   "properties": {"value": 0.5},
+//!   "properties": {"threshold": 0.5},
 //! });
 //!
 //! assert_eq!(res[0].to_geojson(), std::convert::TryFrom::try_from(output).unwrap());
