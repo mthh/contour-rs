@@ -458,10 +458,9 @@ mod tests {
     #[cfg(feature = "geojson")]
     #[test]
     fn test_simple_polygon_no_smoothing_geojson() {
-        use super::*;
         let c = ContourBuilder::new(10, 10, false);
         #[rustfmt::skip]
-            let res = c.contours(&[
+        let res = c.contours(&[
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
