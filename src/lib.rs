@@ -1,14 +1,16 @@
+#![cfg_attr(docsrs, feature(doc_auto_cfg))]
 //! Computes isorings and contour polygons by applying
 //! [marching squares](https://en.wikipedia.org/wiki/Marching_squares)
 //! to a rectangular array of numeric values.
 //!
 //! Outputs ring coordinates (using [`contour_rings`]) or
-//! polygons contours (using [`ContourBuilder`]) as a Vec of GeoJSON Feature.
+//! polygons contours (using [`ContourBuilder`]) as a Vec of [`Contour`].
 //!
 //! This is a port of [d3-contour](https://github.com/d3/d3-contour/).
 //!
 //! #### Example:
-//! ```
+#![cfg_attr(feature = "geojson", doc = "```")]
+#![cfg_attr(not(feature = "geojson"), doc = "```ignore")]
 //! # use contour::ContourBuilder;
 //! let c = ContourBuilder::new(10, 10, false); // x dim., y dim., smoothing
 //! let res = c.contours(&vec![
@@ -22,26 +24,24 @@
 //!     0., 0., 0., 1., 1., 1., 0., 0., 0., 0.,
 //!     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
 //!     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-//! ], &[0.5]); // values, thresholds
-//! ```
-//! __*Output:*__
-//! ```text
-//! [Feature {
-//!   bbox: None,
-//!   geometry: Some(Geometry {
-//!     bbox: None,
-//!     value: MultiPolygon([[[
+//! ], &[0.5]).unwrap(); // values, thresholds
+//!
+//! let output = serde_json::json!({
+//!   "type": "Feature",
+//!   "geometry": {
+//!     "type": "MultiPolygon",
+//!     "coordinates": [[[
 //!       [6., 7.5], [6., 6.5], [6., 5.5], [6., 4.5],
 //!       [6., 3.5], [5.5, 3.], [4.5, 3.], [3.5, 3.],
 //!       [3., 3.5], [3., 4.5], [3., 5.5], [3., 6.5],
 //!       [3., 7.5], [3.5, 8.], [4.5, 8.], [5.5, 8.],
-//!       [6., 7.5]]]]),
-//!     foreign_members: None
-//!     }),
-//!    id: None,
-//!    properties: Some({"value": Number(0.5)}),
-//!    foreign_members: None
-//!    }]
+//!       [6., 7.5]
+//!     ]]],
+//!   },
+//!   "properties": {"value": 0.5},
+//! });
+//!
+//! assert_eq!(res[0].to_geojson(), std::convert::TryFrom::try_from(output).unwrap());
 //! ```
 //!
 //! [`contour_rings`]: fn.contour_rings.html
@@ -51,11 +51,12 @@ mod area;
 mod contour;
 mod error;
 
-pub use crate::contour::{contour_rings, ContourBuilder};
+pub use crate::contour::{contour_rings, Contour, ContourBuilder};
 
 #[cfg(test)]
 mod tests {
     use crate::ContourBuilder;
+    use geo_types::{polygon, MultiPolygon};
 
     #[test]
     fn test_empty_polygons() {
@@ -73,12 +74,7 @@ mod tests {
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
         ], &[0.5]).unwrap();
-        match res[0].clone().geometry.unwrap().value {
-            geojson::Value::MultiPolygon(p) => {
-                assert!(p.is_empty());
-            }
-            _ => panic!(""),
-        };
+        assert!(res[0].geometry().0.is_empty());
     }
 
     #[test]
@@ -97,33 +93,28 @@ mod tests {
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
         ], &[0.5]).unwrap();
-        match res[0].clone().geometry.unwrap().value {
-            geojson::Value::MultiPolygon(p) => {
-                assert_eq!(
-                    p,
-                    vec![vec![vec![
-                        vec![6., 7.5],
-                        vec![6., 6.5],
-                        vec![6., 5.5],
-                        vec![6., 4.5],
-                        vec![6., 3.5],
-                        vec![5.5, 3.],
-                        vec![4.5, 3.],
-                        vec![3.5, 3.],
-                        vec![3., 3.5],
-                        vec![3., 4.5],
-                        vec![3., 5.5],
-                        vec![3., 6.5],
-                        vec![3., 7.5],
-                        vec![3.5, 8.],
-                        vec![4.5, 8.],
-                        vec![5.5, 8.],
-                        vec![6., 7.5]
-                    ]]]
-                );
-            }
-            _ => panic!(""),
-        };
+        assert_eq!(
+            res[0].geometry(),
+            &MultiPolygon(vec![polygon![
+                (x: 6.,  y: 7.5),
+                (x: 6.,  y: 6.5),
+                (x: 6.,  y: 5.5),
+                (x: 6.,  y: 4.5),
+                (x: 6.,  y: 3.5),
+                (x: 5.5, y:  3.),
+                (x: 4.5, y:  3.),
+                (x: 3.5, y:  3.),
+                (x: 3.,  y: 3.5),
+                (x: 3.,  y: 4.5),
+                (x: 3.,  y: 5.5),
+                (x: 3.,  y: 6.5),
+                (x: 3.,  y: 7.5),
+                (x: 3.5, y:  8.),
+                (x: 4.5, y:  8.),
+                (x: 5.5, y:  8.),
+                (x: 6.,  y: 7.5)
+            ]])
+        );
     }
 
     #[test]
@@ -142,46 +133,41 @@ mod tests {
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
         ], &[0.5]).unwrap();
-        match res[0].clone().geometry.unwrap().value {
-            geojson::Value::MultiPolygon(p) => {
-                assert_eq!(
-                    p,
-                    vec![vec![
-                        vec![
-                            vec![6., 7.5],
-                            vec![6., 6.5],
-                            vec![6., 5.5],
-                            vec![6., 4.5],
-                            vec![6., 3.5],
-                            vec![5.5, 3.],
-                            vec![4.5, 3.],
-                            vec![3.5, 3.],
-                            vec![3., 3.5],
-                            vec![3., 4.5],
-                            vec![3., 5.5],
-                            vec![3., 6.5],
-                            vec![3., 7.5],
-                            vec![3.5, 8.],
-                            vec![4.5, 8.],
-                            vec![5.5, 8.],
-                            vec![6., 7.5],
-                        ],
-                        vec![
-                            vec![4.5, 7.],
-                            vec![4., 6.5],
-                            vec![4., 5.5],
-                            vec![4., 4.5],
-                            vec![4.5, 4.],
-                            vec![5., 4.5],
-                            vec![5., 5.5],
-                            vec![5., 6.5],
-                            vec![4.5, 7.],
-                        ],
-                    ],],
-                );
-            }
-            _ => panic!(""),
-        };
+        assert_eq!(
+            res[0].geometry(),
+            &MultiPolygon(vec![polygon! {
+                exterior: [
+                    (x: 6., y: 7.5),
+                    (x: 6., y: 6.5),
+                    (x: 6., y: 5.5),
+                    (x: 6., y: 4.5),
+                    (x: 6., y: 3.5),
+                    (x: 5.5,y:  3.),
+                    (x: 4.5,y:  3.),
+                    (x: 3.5,y:  3.),
+                    (x: 3., y: 3.5),
+                    (x: 3., y: 4.5),
+                    (x: 3., y: 5.5),
+                    (x: 3., y: 6.5),
+                    (x: 3., y: 7.5),
+                    (x: 3.5,y:  8.),
+                    (x: 4.5,y:  8.),
+                    (x: 5.5,y:  8.),
+                    (x: 6., y: 7.5),
+                ],
+                interiors: [[
+                    (x: 4.5,y:  7.),
+                    (x: 4., y: 6.5),
+                    (x: 4., y: 5.5),
+                    (x: 4., y: 4.5),
+                    (x: 4.5,y:  4.),
+                    (x: 5., y: 4.5),
+                    (x: 5., y: 5.5),
+                    (x: 5., y: 6.5),
+                    (x: 4.5,y:  7.),
+                ]]
+            }])
+        );
     }
 
     #[test]
@@ -200,48 +186,43 @@ mod tests {
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
         ], &[0.5]).unwrap();
-        match res[0].clone().geometry.unwrap().value {
-            geojson::Value::MultiPolygon(p) => {
-                assert_eq!(
-                    p,
-                    vec![
-                        vec![vec![
-                            vec![5., 7.5],
-                            vec![5., 6.5],
-                            vec![5., 5.5],
-                            vec![5., 4.5],
-                            vec![5., 3.5],
-                            vec![4.5, 3.],
-                            vec![3.5, 3.],
-                            vec![3., 3.5],
-                            vec![3., 4.5],
-                            vec![3., 5.5],
-                            vec![3., 6.5],
-                            vec![3., 7.5],
-                            vec![3.5, 8.],
-                            vec![4.5, 8.],
-                            vec![5., 7.5],
-                        ],],
-                        vec![vec![
-                            vec![7., 7.5],
-                            vec![7., 6.5],
-                            vec![7., 5.5],
-                            vec![7., 4.5],
-                            vec![7., 3.5],
-                            vec![6.5, 3.],
-                            vec![6., 3.5],
-                            vec![6., 4.5],
-                            vec![6., 5.5],
-                            vec![6., 6.5],
-                            vec![6., 7.5],
-                            vec![6.5, 8.],
-                            vec![7., 7.5],
-                        ],],
-                    ]
-                );
-            }
-            _ => panic!(""),
-        };
+        assert_eq!(
+            res[0].geometry(),
+            &MultiPolygon(vec![
+                polygon![
+                    (x: 5., y: 7.5),
+                    (x: 5., y: 6.5),
+                    (x: 5., y: 5.5),
+                    (x: 5., y: 4.5),
+                    (x: 5., y: 3.5),
+                    (x: 4.5,y:  3.),
+                    (x: 3.5,y:  3.),
+                    (x: 3., y: 3.5),
+                    (x: 3., y: 4.5),
+                    (x: 3., y: 5.5),
+                    (x: 3., y: 6.5),
+                    (x: 3., y: 7.5),
+                    (x: 3.5,y:  8.),
+                    (x: 4.5,y:  8.),
+                    (x: 5., y: 7.5),
+                ],
+                polygon![
+                    (x: 7., y: 7.5),
+                    (x: 7., y: 6.5),
+                    (x: 7., y: 5.5),
+                    (x: 7., y: 4.5),
+                    (x: 7., y: 3.5),
+                    (x: 6.5,y:  3.),
+                    (x: 6., y: 3.5),
+                    (x: 6., y: 4.5),
+                    (x: 6., y: 5.5),
+                    (x: 6., y: 6.5),
+                    (x: 6., y: 7.5),
+                    (x: 6.5,y:  8.),
+                    (x: 7., y: 7.5),
+                ],
+            ])
+        );
     }
 
     #[test]
@@ -260,64 +241,59 @@ mod tests {
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
         ], &[0.5]).unwrap();
-        match res[0].clone().geometry.unwrap().value {
-            geojson::Value::MultiPolygon(p) => {
-                assert_eq!(
-                    p,
-                    vec![
-                        vec![
-                            vec![
-                                vec![4., 5.5],
-                                vec![4., 4.5],
-                                vec![4., 3.5],
-                                vec![3.5, 3.],
-                                vec![2.5, 3.],
-                                vec![1.5, 3.],
-                                vec![1., 3.5],
-                                vec![1., 4.5],
-                                vec![1., 5.5],
-                                vec![1.5, 6.],
-                                vec![2.5, 6.],
-                                vec![3.5, 6.],
-                                vec![4., 5.5],
-                            ],
-                            vec![
-                                vec![2.5, 5.],
-                                vec![2., 4.5],
-                                vec![2.5, 4.],
-                                vec![3., 4.5],
-                                vec![2.5, 5.],
-                            ],
-                        ],
-                        vec![
-                            vec![
-                                vec![8., 5.5],
-                                vec![8., 4.5],
-                                vec![8., 3.5],
-                                vec![7.5, 3.],
-                                vec![6.5, 3.],
-                                vec![5.5, 3.],
-                                vec![5., 3.5],
-                                vec![5., 4.5],
-                                vec![5., 5.5],
-                                vec![5.5, 6.],
-                                vec![6.5, 6.],
-                                vec![7.5, 6.],
-                                vec![8., 5.5],
-                            ],
-                            vec![
-                                vec![6.5, 5.],
-                                vec![6., 4.5],
-                                vec![6.5, 4.],
-                                vec![7., 4.5],
-                                vec![6.5, 5.],
-                            ],
-                        ],
-                    ]
-                );
-            }
-            _ => panic!(""),
-        };
+        assert_eq!(
+            res[0].geometry(),
+            &MultiPolygon(vec![
+                polygon! {
+                     exterior: [
+                             (x: 4., y: 5.5),
+                             (x: 4., y: 4.5),
+                             (x: 4., y: 3.5),
+                             (x: 3.5,y:  3.),
+                             (x: 2.5,y:  3.),
+                             (x: 1.5,y:  3.),
+                             (x: 1., y: 3.5),
+                             (x: 1., y: 4.5),
+                             (x: 1., y: 5.5),
+                             (x: 1.5,y:  6.),
+                             (x: 2.5,y:  6.),
+                             (x: 3.5,y:  6.),
+                             (x: 4., y: 5.5),
+                     ],
+                     interiors: [[
+                         (x: 2.5, y:  5.),
+                         (x: 2.,  y: 4.5),
+                         (x: 2.5, y:  4.),
+                         (x: 3.,  y: 4.5),
+                         (x: 2.5, y:  5.),
+                     ]]
+                },
+                polygon! {
+                    exterior: [
+                        (x: 8., y: 5.5),
+                        (x: 8., y: 4.5),
+                        (x: 8., y: 3.5),
+                        (x: 7.5,y:  3.),
+                        (x: 6.5,y:  3.),
+                        (x: 5.5,y:  3.),
+                        (x: 5., y: 3.5),
+                        (x: 5., y: 4.5),
+                        (x: 5., y: 5.5),
+                        (x: 5.5,y:  6.),
+                        (x: 6.5,y:  6.),
+                        (x: 7.5,y:  6.),
+                        (x: 8., y: 5.5),
+                    ],
+                    interiors: [[
+                        (x: 6.5, y: 5.),
+                        (x: 6.,  y:4.5),
+                        (x: 6.5, y: 4.),
+                        (x: 7.,  y:4.5),
+                        (x: 6.5, y: 5.),
+                    ]],
+                },
+            ])
+        );
     }
 
     #[test]
@@ -336,33 +312,29 @@ mod tests {
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
         ], &[0.5]).unwrap();
-        match res[0].clone().geometry.unwrap().value {
-            geojson::Value::MultiPolygon(p) => {
-                assert_eq!(
-                    p,
-                    vec![vec![vec![
-                        vec![6., 7.5],
-                        vec![6., 6.5],
-                        vec![6., 5.5],
-                        vec![6., 4.5],
-                        vec![6., 3.5],
-                        vec![5.5, 3.],
-                        vec![4.5, 3.],
-                        vec![3.5, 3.],
-                        vec![3., 3.5],
-                        vec![3., 4.5],
-                        vec![3., 5.5],
-                        vec![3., 6.5],
-                        vec![3., 7.5],
-                        vec![3.5, 8.],
-                        vec![4.5, 8.],
-                        vec![5.5, 8.],
-                        vec![6., 7.5],
-                    ]]]
-                );
-            }
-            _ => panic!(""),
-        };
+        assert_eq!(
+            res[0].geometry(),
+            &MultiPolygon(vec![polygon![
+                            (x: 6.,  y: 7.5),
+                            (x: 6.,  y: 6.5),
+                            (x: 6.,  y: 5.5),
+                            (x: 6.,  y: 4.5),
+                            (x: 6.,  y: 3.5),
+                            (x: 5.5, y:  3.),
+                            (x: 4.5, y:  3.),
+                            (x: 3.5, y:  3.),
+                            (x: 3.,  y: 3.5),
+                            (x: 3.,  y: 4.5),
+                            (x: 3.,  y: 5.5),
+                            (x: 3.,  y: 6.5),
+                            (x: 3.,  y: 7.5),
+                            (x: 3.5, y:  8.),
+                            (x: 4.5, y:  8.),
+                            (x: 5.5, y:  8.),
+                            (x: 6.,  y: 7.5),
+
+            ]])
+        );
     }
 
     #[test]
@@ -381,56 +353,46 @@ mod tests {
             0., 0., 0., 1., 1., 1., 1., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
         ], &[0.5, 1.5]).unwrap();
-        match res[0].clone().geometry.unwrap().value {
-            geojson::Value::MultiPolygon(p) => {
-                assert_eq!(
-                    p,
-                    vec![vec![vec![
-                        vec![7., 8.5],
-                        vec![7., 7.5],
-                        vec![7., 6.5],
-                        vec![7., 5.5],
-                        vec![7., 4.5],
-                        vec![7., 3.5],
-                        vec![6.5, 3.],
-                        vec![5.5, 3.],
-                        vec![4.5, 3.],
-                        vec![3.5, 3.],
-                        vec![3., 3.5],
-                        vec![3., 4.5],
-                        vec![3., 5.5],
-                        vec![3., 6.5],
-                        vec![3., 7.5],
-                        vec![3., 8.5],
-                        vec![3.5, 9.],
-                        vec![4.5, 9.],
-                        vec![5.5, 9.],
-                        vec![6.5, 9.],
-                        vec![7., 8.5]
-                    ]]]
-                );
-            }
-            _ => panic!(""),
-        };
-        match res[1].clone().geometry.unwrap().value {
-            geojson::Value::MultiPolygon(p) => {
-                assert_eq!(
-                    p,
-                    vec![vec![vec![
-                        vec![6., 6.5],
-                        vec![6., 5.5],
-                        vec![5.5, 5.],
-                        vec![4.5, 5.],
-                        vec![4., 5.5],
-                        vec![4.5, 6.],
-                        vec![5., 6.5],
-                        vec![5.5, 7.],
-                        vec![6., 6.5]
-                    ]]]
-                );
-            }
-            _ => panic!(""),
-        };
+        assert_eq!(
+            res[0].geometry(),
+            &MultiPolygon(vec![polygon![
+            (x: 7., y: 8.5),
+            (x: 7., y: 7.5),
+            (x: 7., y: 6.5),
+            (x: 7., y: 5.5),
+            (x: 7., y: 4.5),
+            (x: 7., y: 3.5),
+            (x: 6.5,y:  3.),
+            (x: 5.5,y:  3.),
+            (x: 4.5,y:  3.),
+            (x: 3.5,y:  3.),
+            (x: 3., y: 3.5),
+            (x: 3., y: 4.5),
+            (x: 3., y: 5.5),
+            (x: 3., y: 6.5),
+            (x: 3., y: 7.5),
+            (x: 3., y: 8.5),
+            (x: 3.5,y:  9.),
+            (x: 4.5,y:  9.),
+            (x: 5.5,y:  9.),
+            (x: 6.5,y:  9.),
+            (x: 7., y: 8.5)
+                ]])
+        );
+        assert_eq!(
+            res[1].geometry(),
+            &MultiPolygon(vec![polygon![
+                (x: 6.,  y: 6.5),
+                (x: 6.,  y: 5.5),
+                (x: 5.5, y:  5.),
+                (x: 4.5, y:  5.),
+                (x: 4.,  y: 5.5),
+                (x: 4.5, y:  6.),
+                (x: 5.,  y: 6.5),
+                (x: 5.5, y:  7.),
+                (x: 6.,  y: 6.5)
+            ]])
+        );
     }
 
     #[test]
@@ -441,7 +403,7 @@ mod tests {
             .x_origin(100)
             .y_origin(200);
         #[rustfmt::skip]
-            let res = c.contours(&[
+        let res = c.contours(&[
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
@@ -453,47 +415,43 @@ mod tests {
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
         ], &[0.5]).unwrap();
-        match res[0].clone().geometry.unwrap().value {
-            geojson::Value::MultiPolygon(p) => {
-                assert_eq!(
-                    p,
-                    vec![
-                        vec![vec![
-                            vec![110.0, 215.0],
-                            vec![110.0, 213.0],
-                            vec![110.0, 211.0],
-                            vec![110.0, 209.0],
-                            vec![110.0, 207.0],
-                            vec![109.0, 206.0],
-                            vec![107.0, 206.0],
-                            vec![106.0, 207.0],
-                            vec![106.0, 209.0],
-                            vec![106.0, 211.0],
-                            vec![106.0, 213.0],
-                            vec![106.0, 215.0],
-                            vec![107.0, 216.0],
-                            vec![109.0, 216.0],
-                            vec![110.0, 215.0]
-                        ]],
-                        vec![vec![
-                            vec![114.0, 215.0],
-                            vec![114.0, 213.0],
-                            vec![114.0, 211.0],
-                            vec![114.0, 209.0],
-                            vec![114.0, 207.0],
-                            vec![113.0, 206.0],
-                            vec![112.0, 207.0],
-                            vec![112.0, 209.0],
-                            vec![112.0, 211.0],
-                            vec![112.0, 213.0],
-                            vec![112.0, 215.0],
-                            vec![113.0, 216.0],
-                            vec![114.0, 215.0]
-                        ]]
-                    ]
-                );
-            }
-            _ => panic!(""),
-        };
+
+        assert_eq!(
+            res[0].geometry(),
+            &MultiPolygon(vec![
+                polygon![
+                    (x: 110.0, y: 215.0),
+                    (x: 110.0, y: 213.0),
+                    (x: 110.0, y: 211.0),
+                    (x: 110.0, y: 209.0),
+                    (x: 110.0, y: 207.0),
+                    (x: 109.0, y: 206.0),
+                    (x: 107.0, y: 206.0),
+                    (x: 106.0, y: 207.0),
+                    (x: 106.0, y: 209.0),
+                    (x: 106.0, y: 211.0),
+                    (x: 106.0, y: 213.0),
+                    (x: 106.0, y: 215.0),
+                    (x: 107.0, y: 216.0),
+                    (x: 109.0, y: 216.0),
+                    (x: 110.0, y: 215.0)
+                ],
+                polygon![
+                    (x: 114.0, y: 215.0),
+                    (x: 114.0, y: 213.0),
+                    (x: 114.0, y: 211.0),
+                    (x: 114.0, y: 209.0),
+                    (x: 114.0, y: 207.0),
+                    (x: 113.0, y: 206.0),
+                    (x: 112.0, y: 207.0),
+                    (x: 112.0, y: 209.0),
+                    (x: 112.0, y: 211.0),
+                    (x: 112.0, y: 213.0),
+                    (x: 112.0, y: 215.0),
+                    (x: 113.0, y: 216.0),
+                    (x: 114.0, y: 215.0)
+                ]
+            ])
+        );
     }
 }
