@@ -5,7 +5,7 @@ use lazy_static::lazy_static;
 use rustc_hash::FxHashMap;
 use slab::Slab;
 
-pub type Pt = geo_types::Coordinate;
+pub type Pt = geo_types::Coord;
 pub type Ring = Vec<Pt>;
 
 lazy_static! {

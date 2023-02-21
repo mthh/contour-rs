@@ -18,7 +18,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-contour = "0.7.0"
+contour = "0.8.0"
 ```
 
 and this to your crate root:
@@ -82,7 +82,7 @@ The `geojson` feature is not enabled by default, so you need to specify it in yo
 
 ```toml
 [dependencies]
-contour = { version = "0.7.0", features = ["geojson"] }
+contour = { version = "0.8.0", features = ["geojson"] }
 ```
 
 ```rust

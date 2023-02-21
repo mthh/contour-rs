@@ -1,5 +1,11 @@
 ## Changelog
 
+### 0.8.0 (2023-02-21)
+
+- Be less restrictive about the geo-types version and use geo_types::Coord instead of deprecated geo_types::Coordinate.
+
+- Update to Rust 2021 edition.
+
 ### 0.7.0 (2022-09-23)
 
 - BREAKING: Make geojson optional, use geo-types for geometry representation
