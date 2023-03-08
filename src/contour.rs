@@ -1,6 +1,6 @@
 use crate::area::{area, contains};
 use crate::error::{new_error, ErrorKind, Result};
-use geo_types::{LineString, MultiPolygon, Polygon};
+use geo_types::{LineString, MultiLineString, MultiPolygon, Polygon};
 use lazy_static::lazy_static;
 use rustc_hash::FxHashMap;
 use slab::Slab;
@@ -140,8 +140,58 @@ impl ContourBuilder {
             .for_each(drop);
     }
 
+    /// Computes isolines according the given input `values` and the given `thresholds`.
+    /// Returns a `Vec` of [`Line`] (that can easily be transformed
+    /// to GeoJSON Features of MultiLineString).
+    /// The threshold value of each Feature is stored in its `value` property.
+    ///
+    /// # Arguments
+    ///
+    /// * `values` - The slice of values to be used.
+    /// * `thresholds` - The slice of thresholds values to be used.
+    pub fn lines(&self, values: &[f64], thresholds: &[f64]) -> Result<Vec<Line>> {
+        if values.len() as u32 != self.dx * self.dy {
+            return Err(new_error(ErrorKind::BadDimension));
+        }
+        let mut isoring = IsoRingBuilder::new(self.dx, self.dy);
+        thresholds
+            .iter()
+            .map(|threshold| self.line(values, *threshold, &mut isoring))
+            .collect()
+    }
+
+    fn line(&self, values: &[f64], threshold: f64, isoring: &mut IsoRingBuilder) -> Result<Line> {
+        let mut result = isoring.compute(values, threshold)?;
+        let mut linestrings = Vec::new();
+
+        result
+            .drain(..)
+            .map(|mut ring| {
+                // Smooth the ring if needed
+                if self.smooth {
+                    self.smoooth_linear(&mut ring, values, threshold);
+                }
+                // Compute the polygon coordinates according to the grid properties if needed
+                if (self.x_origin, self.y_origin) != (0f64, 0f64)
+                    || (self.x_step, self.y_step) != (1f64, 1f64)
+                {
+                    ring.iter_mut()
+                        .map(|point| {
+                            point.x = point.x * self.x_step + self.x_origin;
+                            point.y = point.y * self.y_step + self.y_origin;
+                        })
+                        .for_each(drop);
+                }
+                linestrings.push(LineString(ring));
+            }).for_each(drop);
+        Ok(Line {
+            geometry: MultiLineString(linestrings),
+            threshold,
+        })
+    }
     /// Computes contours according the given input `values` and the given `thresholds`.
-    /// Returns a `Vec` of GeoJSON Features of MultiPolygon.
+    /// Returns a `Vec` of [`Contour`] (that can easily be transformed
+    /// to GeoJSON Features of MultiPolygon).
     /// The threshold value of each Feature is stored in its `value` property.
     ///
     /// # Arguments
@@ -211,6 +261,71 @@ impl ContourBuilder {
             threshold,
         })
     }
+}
+
+/// A line has the geometry and threshold of a contour ring, built by [`ContourBuilder`].
+#[derive(Debug, Clone)]
+pub struct Line {
+    geometry: MultiLineString,
+    threshold: f64,
+}
+
+impl Line {
+    /// Borrow the [`MultiPolygon`](geo_types::MultiPolygon) geometry of this contour.
+    pub fn geometry(&self) -> &MultiLineString {
+        &self.geometry
+    }
+
+    /// Get the owned polygons and threshold of this countour.
+    pub fn into_inner(self) -> (MultiLineString, f64) {
+        (self.geometry, self.threshold)
+    }
+
+    /// Get the threshold used to construct this contour.
+    pub fn threshold(&self) -> f64 {
+        self.threshold
+    }
+
+    #[cfg(feature = "geojson")]
+    /// Convert the line to a struct from the `geojson` crate.
+    ///
+    /// To get a string representation, call to_geojson().to_string().
+    /// ```
+    /// use contour::ContourBuilder;
+    ///
+    /// let builder = ContourBuilder::new(10, 10, false);
+    /// # #[rustfmt::skip]
+    /// let contours = builder.lines(&[
+    /// // ...ellided for brevity
+    /// #     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+    /// #     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+    /// #     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+    /// #     0., 0., 0., 2., 1., 2., 0., 0., 0., 0.,
+    /// #     0., 0., 0., 2., 2., 2., 0., 0., 0., 0.,
+    /// #     0., 0., 0., 1., 2., 1., 0., 0., 0., 0.,
+    /// #     0., 0., 0., 2., 2., 2., 0., 0., 0., 0.,
+    /// #     0., 0., 0., 2., 1., 2., 0., 0., 0., 0.,
+    /// #     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+    /// #     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
+    /// ], &[0.5]).unwrap();
+    ///
+    /// let geojson_string = contours[0].to_geojson().to_string();
+    ///
+    /// assert_eq!(&geojson_string[0..27], r#"{"geometry":{"coordinates":"#);
+    /// ```
+    pub fn to_geojson(&self) -> geojson::Feature {
+        let mut properties = geojson::JsonObject::with_capacity(1);
+        properties.insert("threshold".to_string(), self.threshold.into());
+
+        geojson::Feature {
+            bbox: None,
+            geometry: Some(geojson::Geometry::from(self.geometry())),
+            id: None,
+            properties: Some(properties),
+            foreign_members: None,
+        }
+    }
+
 }
 
 /// A contour has the geometry and threshold of a contour ring, built by [`ContourBuilder`].

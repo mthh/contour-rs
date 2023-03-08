@@ -1,5 +1,11 @@
 ## Changelog
 
+### 0.9.0 (2023-xx-xx)
+
+- Add support for building isolines as MultiLineStrings (instead of solely building contour polygons as MultiPolygons).
+
+- Improve some minor details in the documentation.
+
 ### 0.8.0 (2023-02-21)
 
 - Be less restrictive about the geo-types version and use geo_types::Coord instead of deprecated geo_types::Coordinate.

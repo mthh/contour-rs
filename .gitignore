@@ -1,4 +1,9 @@
-
 /target/
 **/*.rs.bk
 Cargo.lock
+
+# IntelliJ related
+.idea/
+
+# VSCode related
+.vscode/

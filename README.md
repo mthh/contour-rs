@@ -28,9 +28,14 @@ extern crate contour;
 ```
 
 The API exposes:
-- a `contour_rings` function, which computes isorings coordinates for one threshold value (*returns a `Vec` of rings coordinates*).
-- a `ContourBuilder` struct, which computes isorings coordinates for a `Vec` of threshold values and transform them in `Contour`s (a type containing the threshold value and the geometry as a MultiPolygon, easily serializable to GeoJSON).
+- a `ContourBuilder` struct, which computes isorings coordinates for a `Vec` of threshold values and transform them either :
+  - in `Contour`s (a type containing the threshold value and the geometry as a `MultiPolygon`, easily serializable to GeoJSON), or,
+  - in `Line`s (a type containing the threshold value and the geometry as a `MultiLineString`, easily serializable to GeoJSON).
 
+
+- a `contour_rings` function, which computes isorings coordinates for a single threshold value (*returns a `Vec` of rings coordinates* - this is what is used internally by the `ContourBuilder`).
+
+`ContourBuilder` is the recommended way to use this crate, as it is more flexible and easier to use (it enables to specify the origin and the step of the grid, and to smooth the contours, while `contour_rings` only speak in grid coordinates and doesn't smooth the resulting rings).
 
 ### Example:
 
