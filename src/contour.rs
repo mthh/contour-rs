@@ -183,7 +183,8 @@ impl ContourBuilder {
                         .for_each(drop);
                 }
                 linestrings.push(LineString(ring));
-            }).for_each(drop);
+            })
+            .for_each(drop);
         Ok(Line {
             geometry: MultiLineString(linestrings),
             threshold,
@@ -325,7 +326,6 @@ impl Line {
             foreign_members: None,
         }
     }
-
 }
 
 /// A contour has the geometry and threshold of a contour ring, built by [`ContourBuilder`].
