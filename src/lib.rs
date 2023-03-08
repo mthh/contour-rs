@@ -56,13 +56,32 @@ pub use crate::contour::{contour_rings, Contour, ContourBuilder};
 #[cfg(test)]
 mod tests {
     use crate::ContourBuilder;
-    use geo_types::{polygon, MultiPolygon};
+    use geo_types::{line_string, polygon, MultiLineString, MultiPolygon};
 
     #[test]
     fn test_empty_polygons() {
         let c = ContourBuilder::new(10, 10, true);
         #[rustfmt::skip]
         let res = c.contours(&[
+            0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+            0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+            0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+            0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+            0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+            0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+            0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+            0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+            0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+            0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+        ], &[0.5]).unwrap();
+        assert!(res[0].geometry().0.is_empty());
+    }
+
+    #[test]
+    fn test_empty_isoline() {
+        let c = ContourBuilder::new(10, 10, true);
+        #[rustfmt::skip]
+            let res = c.lines(&[
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
@@ -96,6 +115,46 @@ mod tests {
         assert_eq!(
             res[0].geometry(),
             &MultiPolygon(vec![polygon![
+                (x: 6.,  y: 7.5),
+                (x: 6.,  y: 6.5),
+                (x: 6.,  y: 5.5),
+                (x: 6.,  y: 4.5),
+                (x: 6.,  y: 3.5),
+                (x: 5.5, y:  3.),
+                (x: 4.5, y:  3.),
+                (x: 3.5, y:  3.),
+                (x: 3.,  y: 3.5),
+                (x: 3.,  y: 4.5),
+                (x: 3.,  y: 5.5),
+                (x: 3.,  y: 6.5),
+                (x: 3.,  y: 7.5),
+                (x: 3.5, y:  8.),
+                (x: 4.5, y:  8.),
+                (x: 5.5, y:  8.),
+                (x: 6.,  y: 7.5)
+            ]])
+        );
+    }
+
+    #[test]
+    fn test_simple_isoline() {
+        let c = ContourBuilder::new(10, 10, true);
+        #[rustfmt::skip]
+            let res = c.lines(&[
+            0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+            0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+            0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+            0., 0., 0., 1., 1., 1., 0., 0., 0., 0.,
+            0., 0., 0., 1., 1., 1., 0., 0., 0., 0.,
+            0., 0., 0., 1., 1., 1., 0., 0., 0., 0.,
+            0., 0., 0., 1., 1., 1., 0., 0., 0., 0.,
+            0., 0., 0., 1., 1., 1., 0., 0., 0., 0.,
+            0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+            0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
+        ], &[0.5]).unwrap();
+        assert_eq!(
+            res[0].geometry(),
+            &MultiLineString(vec![line_string![
                 (x: 6.,  y: 7.5),
                 (x: 6.,  y: 6.5),
                 (x: 6.,  y: 5.5),
