@@ -6,19 +6,21 @@
 
 Computes *isorings* and __*contour polygons*__ by applying [marching squares](https://en.wikipedia.org/wiki/Marching_squares) to a rectangular array of numeric values.  
 Outputs ring coordinates or polygons contours (represented using geo-types [MultiPolygon](https://docs.rs/geo-types/latest/geo_types/geometry/struct.MultiPolygon.html)s).
+For each threshold value, the contour polygon are representing the area where the input values are greater than or equal to the threshold value.
+
 The generated contours can also easily be serialised to GeoJSON.
 
 *Note : This is a port of [d3-contour](https://github.com/d3/d3-contour).*  
 
 <div style="text-align:center"><a href="https://mthh.github.io/wasm_demo_contour/"><img src ="https://raw.githubusercontent.com/mthh/contour-rs/master/illustration.png" /></a></div><br>
 
-### Usage
+## Usage
 
 Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-contour = "0.8.0"
+contour = "0.9.0"
 ```
 
 and this to your crate root:
@@ -37,7 +39,7 @@ The API exposes:
 
 `ContourBuilder` is the recommended way to use this crate, as it is more flexible and easier to use (it enables to specify the origin and the step of the grid, and to smooth the contours, while `contour_rings` only speak in grid coordinates and doesn't smooth the resulting rings).
 
-### Example:
+## Example:
 
 **Without defining origin and step:**
 
@@ -140,9 +142,17 @@ Feature {
 }
 ```
 
-### Demo
+## WASM demo
 
 Demo of this crate compiled to WebAssembly and used from JavaScript : [wasm_demo_contour](https://mthh.github.io/wasm_demo_contour/).
+
+## Difference with the [contour-isobands](https://crates.io/crates/contour-isobands) crate (from [mthh/contour-isobands-rs](https://github.com/mthh/contour-isobands-rs) repository)
+While this crate computes isolines (cf. [wikipedia:Marching_squares](https://en.wikipedia.org/wiki/Marching_squares))
+and their corresponding polygons (i.e. polygons that contain all points above the threshold defined for a given isoline),
+[contour-isobands-rs](https://github.com/mthh/contour-isobands-rs) computes isobands (cf. [wikipedia:Marching_squares#Isobands](https://en.wikipedia.org/wiki/Marching_squares#Isobands))
+and their corresponding polygons (i.e. contour polygons that contain all points between a minimum and a maximum bound).
+
+Depending on the desired use of the result, the [`contour-isobands`](https://crates.io/crates/contour-isobands) crate may be more suitable than this [`contour`](https://crates.io/crates/contour) crate.
 
 ## License
 
@@ -153,7 +163,7 @@ Licensed under either of
 
 at your option.
 
-### Contribution
+## Contribution
 
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any

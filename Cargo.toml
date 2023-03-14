@@ -1,6 +1,6 @@
 [package]
 name = "contour"
-version = "0.8.0"
+version = "0.9.0"
 authors = ["Matthieu Viry <matthieu.viry@cnrs.fr>"]
 edition = "2021"
 

@@ -1,10 +1,10 @@
 ## Changelog
 
-### 0.9.0 (2023-xx-xx)
+### 0.9.0 (2023-03-14)
 
-- Add support for building isolines as MultiLineStrings (instead of solely building contour polygons as MultiPolygons).
+- Add support for building isolines as `MultiLineString`s (instead of solely building contour polygons as MultiPolygons).
 
-- Improve some minor details in the documentation.
+- Improve some minor details in the documentation and in the README (notably to refer to the [contour-isobands](https://github.com/mthh/contour-isobands-rs) crate)
 
 ### 0.8.0 (2023-02-21)
 
