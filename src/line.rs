@@ -1,30 +1,30 @@
-use geo_types::MultiPolygon;
+use geo_types::MultiLineString;
 
-/// A contour has the geometry and threshold of a contour ring, built by [`ContourBuilder`].
+/// A line has the geometry and threshold of a contour ring, built by [`ContourBuilder`].
 #[derive(Debug, Clone)]
-pub struct Contour {
-    pub(crate) geometry: MultiPolygon,
+pub struct Line {
+    pub(crate) geometry: MultiLineString,
     pub(crate) threshold: f64,
 }
 
-impl Contour {
-    /// Borrow the [`MultiPolygon`](geo_types::MultiPolygon) geometry of this contour.
-    pub fn geometry(&self) -> &MultiPolygon {
+impl Line {
+    /// Borrow the [`MultiLineString`](geo_types::MultiLineString) geometry of this contour.
+    pub fn geometry(&self) -> &MultiLineString {
         &self.geometry
     }
 
-    /// Get the owned polygons and threshold of this contour.
-    pub fn into_inner(self) -> (MultiPolygon, f64) {
+    /// Get the owned lines and threshold of this contour.
+    pub fn into_inner(self) -> (MultiLineString, f64) {
         (self.geometry, self.threshold)
     }
 
-    /// Get the threshold used to construct this contour.
+    /// Get the threshold used to construct this isoline.
     pub fn threshold(&self) -> f64 {
         self.threshold
     }
 
     #[cfg(feature = "geojson")]
-    /// Convert the contour to a struct from the `geojson` crate.
+    /// Convert the line to a struct from the `geojson` crate.
     ///
     /// To get a string representation, call to_geojson().to_string().
     /// ```
@@ -32,7 +32,7 @@ impl Contour {
     ///
     /// let builder = ContourBuilder::new(10, 10, false);
     /// # #[rustfmt::skip]
-    /// let contours = builder.contours(&[
+    /// let contours = builder.lines(&[
     /// // ...ellided for brevity
     /// #     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
     /// #     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,

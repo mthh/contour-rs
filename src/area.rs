@@ -1,4 +1,4 @@
-use crate::contour::Pt;
+use crate::Pt;
 
 pub fn area(ring: &[Pt]) -> f64 {
     let mut i = 0;

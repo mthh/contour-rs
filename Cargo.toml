@@ -16,10 +16,20 @@ license = "MIT/Apache-2.0"
 geojson = { version = ">=0.16, <=0.24", optional = true }
 geo-types= { version = "0.7" }
 lazy_static = "1.0"
-serde_json = "^1.0"
+serde_json = { version = "^1.0", optional = true }
 rustc-hash = "1.0"
 slab = "0.4"
+
+[dev-dependencies]
+serde_json = "^1.0"
+
+[features]
+geojson = ["dep:geojson", "dep:serde_json"]
 
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
+
+[[example]]
+name = "ex"
+required-features = ["geojson"]

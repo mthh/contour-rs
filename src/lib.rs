@@ -3,10 +3,18 @@
 //! [marching squares](https://en.wikipedia.org/wiki/Marching_squares)
 //! to a rectangular array of numeric values.
 //!
-//! Outputs ring coordinates (using [`contour_rings`]) or
-//! polygons contours (using [`ContourBuilder`]) as a Vec of [`Contour`].
+//! Use the [`ContourBuilder`]) to compute for a given set of values and thresholds:
+//! - isolines, as a Vec of [`Line`],
+//! - contour polygons, as a Vec of [`Contour`],
+//! - isobands, as a Vec of [`Band`].
 //!
-//! This is a port of [d3-contour](https://github.com/d3/d3-contour/).
+//! The [`contour_rings`] function is a convenience function to compute ring (isoline) coordinates
+//! for a single threshold.
+//!
+//! While contour polygons ([`Contour`]) enclose all the values above a given threshold,
+//! isobands ([`Band`]) are polygons that enclose all the values between two thresholds.
+//!
+//! The core of the algorithm is ported from [d3-contour](https://github.com/d3/d3-contour/).
 //!
 //! #### Example:
 #![cfg_attr(feature = "geojson", doc = "```")]
@@ -48,10 +56,21 @@
 //! [`ContourBuilder`]: struct.ContourBuilder.html
 
 mod area;
+mod band;
 mod contour;
+mod contourbuilder;
 mod error;
+mod isoringbuilder;
+mod line;
 
-pub use crate::contour::{contour_rings, Contour, ContourBuilder};
+pub type Pt = geo_types::Coord;
+pub type Ring = Vec<Pt>;
+
+pub use crate::band::Band;
+pub use crate::contour::Contour;
+pub use crate::contourbuilder::ContourBuilder;
+pub use crate::isoringbuilder::contour_rings;
+pub use crate::line::Line;
 
 #[cfg(test)]
 mod tests {

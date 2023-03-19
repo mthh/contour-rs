@@ -7,7 +7,7 @@ pub(crate) fn new_error(kind: ErrorKind) -> Error {
     Error(Box::new(kind))
 }
 
-/// A type alias for `Result<T, csv::Error>`.
+/// A type alias for `Result<T, Error>`.
 pub type Result<T> = result::Result<T, Error>;
 
 /// An error that can occur when computing contours.
@@ -31,10 +31,12 @@ impl Error {
 #[non_exhaustive]
 pub enum ErrorKind {
     BadDimension,
-    JsonError(serde_json::error::Error),
     Unexpected,
+    #[cfg(feature = "geojson")]
+    JsonError(serde_json::error::Error),
 }
 
+#[cfg(feature = "geojson")]
 impl From<serde_json::error::Error> for Error {
     fn from(err: serde_json::error::Error) -> Error {
         new_error(ErrorKind::JsonError(err))
@@ -44,9 +46,10 @@ impl From<serde_json::error::Error> for Error {
 impl StdError for Error {
     fn source(&self) -> Option<&(dyn StdError + 'static)> {
         match *self.0 {
-            ErrorKind::JsonError(ref err) => Some(err),
             ErrorKind::BadDimension => None,
             ErrorKind::Unexpected => None,
+            #[cfg(feature = "geojson")]
+            ErrorKind::JsonError(ref err) => Some(err),
         }
     }
 }
@@ -54,12 +57,13 @@ impl StdError for Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self.0 {
-            ErrorKind::JsonError(ref err) => err.fmt(f),
             ErrorKind::BadDimension => write!(
                 f,
                 "The length of provided values doesn't match the (dx, dy) dimensions of the grid"
             ),
             ErrorKind::Unexpected => write!(f, "Unexpected error while computing contours"),
+            #[cfg(feature = "geojson")]
+            ErrorKind::JsonError(ref err) => err.fmt(f),
         }
     }
 }

@@ -1,30 +1,36 @@
 use geo_types::MultiPolygon;
 
-/// A contour has the geometry and threshold of a contour ring, built by [`ContourBuilder`].
+/// An isoband has the geometry and min / max values of a contour ring, built by [`ContourBuilder`].
 #[derive(Debug, Clone)]
-pub struct Contour {
+pub struct Band {
     pub(crate) geometry: MultiPolygon,
-    pub(crate) threshold: f64,
+    pub(crate) min_v: f64,
+    pub(crate) max_v: f64,
 }
 
-impl Contour {
+impl Band {
     /// Borrow the [`MultiPolygon`](geo_types::MultiPolygon) geometry of this contour.
     pub fn geometry(&self) -> &MultiPolygon {
         &self.geometry
     }
 
-    /// Get the owned polygons and threshold of this contour.
-    pub fn into_inner(self) -> (MultiPolygon, f64) {
-        (self.geometry, self.threshold)
+    /// Get the owned polygons and thresholds (min and max) of this band.
+    pub fn into_inner(self) -> (MultiPolygon, f64, f64) {
+        (self.geometry, self.min_v, self.max_v)
     }
 
-    /// Get the threshold used to construct this contour.
-    pub fn threshold(&self) -> f64 {
-        self.threshold
+    /// Get the minimum value used to construct this band.
+    pub fn min_v(&self) -> f64 {
+        self.min_v
+    }
+
+    /// Get the maximum value used to construct this band.
+    pub fn max_v(&self) -> f64 {
+        self.max_v
     }
 
     #[cfg(feature = "geojson")]
-    /// Convert the contour to a struct from the `geojson` crate.
+    /// Convert the band to a struct from the `geojson` crate.
     ///
     /// To get a string representation, call to_geojson().to_string().
     /// ```
@@ -32,27 +38,28 @@ impl Contour {
     ///
     /// let builder = ContourBuilder::new(10, 10, false);
     /// # #[rustfmt::skip]
-    /// let contours = builder.contours(&[
+    /// let contours = builder.isobands(&[
     /// // ...ellided for brevity
     /// #     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
     /// #     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
     /// #     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
-    /// #     0., 0., 0., 2., 1., 2., 0., 0., 0., 0.,
-    /// #     0., 0., 0., 2., 2., 2., 0., 0., 0., 0.,
+    /// #     0., 0., 0., 1., 1., 1., 0., 0., 0., 0.,
     /// #     0., 0., 0., 1., 2., 1., 0., 0., 0., 0.,
-    /// #     0., 0., 0., 2., 2., 2., 0., 0., 0., 0.,
-    /// #     0., 0., 0., 2., 1., 2., 0., 0., 0., 0.,
+    /// #     0., 0., 0., 1., 2., 1., 0., 0., 0., 0.,
+    /// #     0., 0., 0., 1., 2., 1., 0., 0., 0., 0.,
+    /// #     0., 0., 0., 1., 1., 1., 0., 0., 0., 0.,
     /// #     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
     /// #     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-    /// ], &[0.5]).unwrap();
+    /// ], &[0.5, 1.5, 2.5]).unwrap();
     ///
     /// let geojson_string = contours[0].to_geojson().to_string();
     ///
     /// assert_eq!(&geojson_string[0..27], r#"{"geometry":{"coordinates":"#);
     /// ```
     pub fn to_geojson(&self) -> geojson::Feature {
-        let mut properties = geojson::JsonObject::with_capacity(1);
-        properties.insert("threshold".to_string(), self.threshold.into());
+        let mut properties = geojson::JsonObject::with_capacity(2);
+        properties.insert("min_v".to_string(), self.min_v.into());
+        properties.insert("max_v".to_string(), self.max_v.into());
 
         geojson::Feature {
             bbox: None,
