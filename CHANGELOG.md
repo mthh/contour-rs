@@ -1,8 +1,12 @@
 ## Changelog
 
+### Unreleased
+
+- Allow to compute isobands as `MultiPolygon` using the `isobands` method of the `ContourBuilder` struct.
+
 ### 0.9.0 (2023-03-14)
 
-- Add support for building isolines as `MultiLineString`s (instead of solely building contour polygons as MultiPolygons).
+- Add support for building isolines as `MultiLineString`s (instead of solely building contour polygons as MultiPolygons) using the `lines` method of the `ContourBuilder` struct.
 
 - Improve some minor details in the documentation and in the README (notably to refer to the [contour-isobands](https://github.com/mthh/contour-isobands-rs) crate)
 
