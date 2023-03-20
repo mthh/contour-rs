@@ -1,6 +1,6 @@
 ## Changelog
 
-### Unreleased
+### 0.10.0 (2023-03-20)
 
 - Allow to compute isobands as `MultiPolygon` using the `isobands` method of the `ContourBuilder` struct.
 
