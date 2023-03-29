@@ -10,7 +10,7 @@ homepage = "https://github.com/mthh/contour-rs"
 documentation = "https://docs.rs/contour"
 readme = "README.md"
 keywords = ["contour", "polygon", "isoring", "marching-squares", "geojson"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 geojson = { version = ">=0.16, <=0.24", optional = true }
