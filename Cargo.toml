@@ -25,6 +25,7 @@ serde_json = "^1.0"
 
 [features]
 geojson = ["dep:geojson", "dep:serde_json"]
+f32 = []
 
 [package.metadata.docs.rs]
 all-features = true

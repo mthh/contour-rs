@@ -63,7 +63,16 @@ mod error;
 mod isoringbuilder;
 mod line;
 
+#[cfg(feature = "f32")]
+pub type Float = f32;
+#[cfg(not(feature = "f32"))]
+pub type Float = f64;
+
+#[cfg(not(feature = "f32"))]
 pub type Pt = geo_types::Coord;
+#[cfg(feature = "f32")]
+pub type Pt = geo_types::Coord::<f32>;
+
 pub type Ring = Vec<Pt>;
 
 pub use crate::band::Band;
