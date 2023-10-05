@@ -212,7 +212,7 @@ impl IsoRingBuilder {
                     .fragment_by_end
                     .remove(&start_index)
                     .ok_or_else(|| new_error(ErrorKind::Unexpected))?;
-                let mut f = self
+                let f = self
                     .f
                     .get_mut(f_ix)
                     .ok_or_else(|| new_error(ErrorKind::Unexpected))?;
@@ -251,7 +251,7 @@ impl IsoRingBuilder {
                     .fragment_by_start
                     .remove(&end_index)
                     .ok_or_else(|| new_error(ErrorKind::Unexpected))?;
-                let mut f = self
+                let f = self
                     .f
                     .get_mut(f_ix)
                     .ok_or_else(|| new_error(ErrorKind::Unexpected))?;
