@@ -67,11 +67,10 @@ mod line;
 pub type Float = f32;
 #[cfg(not(feature = "f32"))]
 pub type Float = f64;
-
+#[cfg(feature = "f32")]
+pub type Pt = geo_types::Coord<f32>;
 #[cfg(not(feature = "f32"))]
 pub type Pt = geo_types::Coord;
-#[cfg(feature = "f32")]
-pub type Pt = geo_types::Coord::<f32>;
 
 pub type Ring = Vec<Pt>;
 
@@ -83,7 +82,7 @@ pub use crate::line::Line;
 
 #[cfg(test)]
 mod tests {
-    use crate::ContourBuilder;
+    use crate::{ContourBuilder, Float};
     use geo_types::{line_string, polygon, MultiLineString, MultiPolygon};
 
     #[test]
@@ -142,7 +141,7 @@ mod tests {
         ], &[0.5]).unwrap();
         assert_eq!(
             res[0].geometry(),
-            &MultiPolygon(vec![polygon![
+            &MultiPolygon::<Float>(vec![polygon![
                 (x: 6.,  y: 7.5),
                 (x: 6.,  y: 6.5),
                 (x: 6.,  y: 5.5),
@@ -182,7 +181,7 @@ mod tests {
         ], &[0.5]).unwrap();
         assert_eq!(
             res[0].geometry(),
-            &MultiLineString(vec![line_string![
+            &MultiLineString::<Float>(vec![line_string![
                 (x: 6.,  y: 7.5),
                 (x: 6.,  y: 6.5),
                 (x: 6.,  y: 5.5),
@@ -222,7 +221,7 @@ mod tests {
         ], &[0.5]).unwrap();
         assert_eq!(
             res[0].geometry(),
-            &MultiPolygon(vec![polygon! {
+            &MultiPolygon::<Float>(vec![polygon! {
                 exterior: [
                     (x: 6., y: 7.5),
                     (x: 6., y: 6.5),
@@ -275,7 +274,7 @@ mod tests {
         ], &[0.5]).unwrap();
         assert_eq!(
             res[0].geometry(),
-            &MultiPolygon(vec![
+            &MultiPolygon::<Float>(vec![
                 polygon![
                     (x: 5., y: 7.5),
                     (x: 5., y: 6.5),
@@ -330,7 +329,7 @@ mod tests {
         ], &[0.5]).unwrap();
         assert_eq!(
             res[0].geometry(),
-            &MultiPolygon(vec![
+            &MultiPolygon::<Float>(vec![
                 polygon! {
                      exterior: [
                              (x: 4., y: 5.5),
@@ -401,7 +400,7 @@ mod tests {
         ], &[0.5]).unwrap();
         assert_eq!(
             res[0].geometry(),
-            &MultiPolygon(vec![polygon![
+            &MultiPolygon::<Float>(vec![polygon![
                             (x: 6.,  y: 7.5),
                             (x: 6.,  y: 6.5),
                             (x: 6.,  y: 5.5),
@@ -442,7 +441,7 @@ mod tests {
         ], &[0.5, 1.5]).unwrap();
         assert_eq!(
             res[0].geometry(),
-            &MultiPolygon(vec![polygon![
+            &MultiPolygon::<Float>(vec![polygon![
             (x: 7., y: 8.5),
             (x: 7., y: 7.5),
             (x: 7., y: 6.5),
@@ -468,7 +467,7 @@ mod tests {
         );
         assert_eq!(
             res[1].geometry(),
-            &MultiPolygon(vec![polygon![
+            &MultiPolygon::<Float>(vec![polygon![
                 (x: 6.,  y: 6.5),
                 (x: 6.,  y: 5.5),
                 (x: 5.5, y:  5.),
@@ -485,10 +484,10 @@ mod tests {
     #[test]
     fn test_multipolygon_with_x_y_steps() {
         let c = ContourBuilder::new(10, 10, true)
-            .x_step(2)
-            .y_step(2)
-            .x_origin(100)
-            .y_origin(200);
+            .x_step(2.0)
+            .y_step(2.0)
+            .x_origin(100.0)
+            .y_origin(200.0);
         #[rustfmt::skip]
         let res = c.contours(&[
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
@@ -505,7 +504,7 @@ mod tests {
 
         assert_eq!(
             res[0].geometry(),
-            &MultiPolygon(vec![
+            &MultiPolygon::<Float>(vec![
                 polygon![
                     (x: 110.0, y: 215.0),
                     (x: 110.0, y: 213.0),
