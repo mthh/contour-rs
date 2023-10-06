@@ -1,5 +1,9 @@
 ## Changelog
 
+### 0.11.0 (2023-10-06)
+
+- Add `f32` feature to use `f32` instead of `f64` for the input values and the computations (thanks to @hakolao).
+
 ### 0.10.0 (2023-03-20)
 
 - Allow to compute isobands as `MultiPolygon` using the `isobands` method of the `ContourBuilder` struct.

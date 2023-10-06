@@ -19,7 +19,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-contour = "0.10.0"
+contour = "0.11.0"
 ```
 
 and this to your crate root:
@@ -90,7 +90,7 @@ The `geojson` feature is not enabled by default, so you need to specify it in yo
 
 ```toml
 [dependencies]
-contour = { version = "0.10.0", features = ["geojson"] }
+contour = { version = "0.11.0", features = ["geojson"] }
 ```
 
 ```rust
@@ -141,6 +141,16 @@ Feature {
     properties: Some({"threshold": Number(0.5)}),
     foreign_members: None
 }
+```
+
+**Using the `f32` feature**
+
+By default, this crate expects `f64` values as input and uses `f64` values for its computations.
+If you want to use `f32` values instead, you need to specify the `f32` feature in your `Cargo.toml`:
+
+```toml
+[dependencies]
+contour = { version = "0.11.0", features = ["f32"] }
 ```
 
 ## WASM demo
