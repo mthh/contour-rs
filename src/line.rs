@@ -1,25 +1,26 @@
+use crate::Float;
 use geo_types::MultiLineString;
 
 /// A line has the geometry and threshold of a contour ring, built by [`ContourBuilder`].
 #[derive(Debug, Clone)]
 pub struct Line {
-    pub(crate) geometry: MultiLineString,
-    pub(crate) threshold: f64,
+    pub(crate) geometry: MultiLineString<Float>,
+    pub(crate) threshold: Float,
 }
 
 impl Line {
     /// Borrow the [`MultiLineString`](geo_types::MultiLineString) geometry of this contour.
-    pub fn geometry(&self) -> &MultiLineString {
+    pub fn geometry(&self) -> &MultiLineString<Float> {
         &self.geometry
     }
 
     /// Get the owned lines and threshold of this contour.
-    pub fn into_inner(self) -> (MultiLineString, f64) {
+    pub fn into_inner(self) -> (MultiLineString<Float>, Float) {
         (self.geometry, self.threshold)
     }
 
     /// Get the threshold used to construct this isoline.
-    pub fn threshold(&self) -> f64 {
+    pub fn threshold(&self) -> Float {
         self.threshold
     }
 

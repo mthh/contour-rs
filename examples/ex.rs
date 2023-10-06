@@ -1,4 +1,4 @@
-use contour::ContourBuilder;
+use contour::{ContourBuilder, Float};
 use geojson::{FeatureCollection, GeoJson};
 use std::fs::File;
 use std::io::{BufWriter, Write};
@@ -6,11 +6,20 @@ use std::io::{BufWriter, Write};
 fn main() {
     let pot_pop_fr = include_str!("../tests/fixtures/pot_pop_fr.json");
     let raw_data: serde_json::Value = serde_json::from_str(pot_pop_fr).unwrap();
-    let matrix: Vec<f64> = raw_data["data"]
+    let matrix: Vec<Float> = raw_data["data"]
         .as_array()
         .unwrap()
         .iter()
-        .map(|x| x.as_f64().unwrap())
+        .map(|x| {
+            #[cfg(not(feature = "f32"))]
+            {
+                x.as_f64().unwrap()
+            }
+            #[cfg(feature = "f32")]
+            {
+                x.as_f64().unwrap() as f32
+            }
+        })
         .collect();
     let h = raw_data["height"].as_u64().unwrap() as u32;
     let w = raw_data["width"].as_u64().unwrap() as u32;
@@ -51,11 +60,20 @@ fn main() {
 
     let volcano = include_str!("../tests/fixtures/volcano.json");
     let raw_data: serde_json::Value = serde_json::from_str(volcano).unwrap();
-    let matrix: Vec<f64> = raw_data["data"]
+    let matrix: Vec<Float> = raw_data["data"]
         .as_array()
         .unwrap()
         .iter()
-        .map(|x| x.as_f64().unwrap())
+        .map(|x| {
+            #[cfg(not(feature = "f32"))]
+            {
+                x.as_f64().unwrap()
+            }
+            #[cfg(feature = "f32")]
+            {
+                x.as_f64().unwrap() as f32
+            }
+        })
         .collect();
     let h = raw_data["height"].as_u64().unwrap() as u32;
     let w = raw_data["width"].as_u64().unwrap() as u32;

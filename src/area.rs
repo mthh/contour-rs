@@ -1,6 +1,6 @@
-use crate::Pt;
+use crate::{Float, Pt};
 
-pub fn area(ring: &[Pt]) -> f64 {
+pub fn area(ring: &[Pt]) -> Float {
     let mut i = 0;
     let n = ring.len() - 1;
     let mut area = ring[n - 1].y * ring[0].x - ring[n - 1].x * ring[0].y;
@@ -51,7 +51,7 @@ fn ring_contains(ring: &[Pt], point: &Pt) -> i32 {
 
 fn segment_contains(a: &Pt, b: &Pt, c: &Pt) -> bool {
     if collinear(a, b, c) {
-        if (a.x - b.x).abs() < std::f64::EPSILON {
+        if (a.x - b.x).abs() < Float::EPSILON {
             within(a.y, c.y, b.y)
         } else {
             within(a.x, c.x, b.x)
@@ -62,9 +62,9 @@ fn segment_contains(a: &Pt, b: &Pt, c: &Pt) -> bool {
 }
 
 fn collinear(a: &Pt, b: &Pt, c: &Pt) -> bool {
-    ((b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y)).abs() < std::f64::EPSILON
+    ((b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y)).abs() < Float::EPSILON
 }
 
-fn within(p: f64, q: f64, r: f64) -> bool {
+fn within(p: Float, q: Float, r: Float) -> bool {
     p <= q && q <= r || r <= q && q <= p
 }

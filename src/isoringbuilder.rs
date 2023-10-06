@@ -1,12 +1,12 @@
 use crate::error::{new_error, ErrorKind, Result};
-use crate::{Pt, Ring};
+use crate::{Float, Pt, Ring};
 use lazy_static::lazy_static;
 use rustc_hash::FxHashMap;
 use slab::Slab;
 
 lazy_static! {
     #[rustfmt::skip]
-    static ref CASES: Vec<Vec<Vec<Vec<f64>>>> = vec![
+    static ref CASES: Vec<Vec<Vec<Vec<Float>>>> = vec![
         vec![],
         vec![vec![vec![1.0, 1.5], vec![0.5, 1.0]]],
         vec![vec![vec![1.5, 1.0], vec![1.0, 1.5]]],
@@ -49,7 +49,7 @@ struct Fragment {
 /// * `threshold` - The threshold value.
 /// * `dx` - The number of columns in the grid.
 /// * `dy` - The number of rows in the grid.
-pub fn contour_rings(values: &[f64], threshold: f64, dx: u32, dy: u32) -> Result<Vec<Ring>> {
+pub fn contour_rings(values: &[Float], threshold: Float, dx: u32, dy: u32) -> Result<Vec<Ring>> {
     let mut isoring = IsoRingBuilder::new(dx, dy);
     isoring.compute(values, threshold)
 }
@@ -89,7 +89,7 @@ impl IsoRingBuilder {
     ///
     /// * `values` - The slice of values to be used.
     /// * `threshold` - The threshold value to use.
-    pub fn compute(&mut self, values: &[f64], threshold: f64) -> Result<Vec<Ring>> {
+    pub fn compute(&mut self, values: &[Float], threshold: Float) -> Result<Vec<Ring>> {
         macro_rules! case_stitch {
             ($ix:expr, $x:ident, $y:ident, $result:expr) => {
                 CASES[$ix]
@@ -166,18 +166,24 @@ impl IsoRingBuilder {
     }
 
     fn index(&self, point: &Pt) -> usize {
-        (point.x * 2.0 + point.y * (self.dx as f64 + 1.) * 4.) as usize
+        (point.x * 2.0 + point.y * (self.dx as Float + 1.) * 4.) as usize
     }
 
     // Stitchs segments to rings.
-    fn stitch(&mut self, line: &[Vec<f64>], x: i32, y: i32, result: &mut Vec<Ring>) -> Result<()> {
+    fn stitch(
+        &mut self,
+        line: &[Vec<Float>],
+        x: i32,
+        y: i32,
+        result: &mut Vec<Ring>,
+    ) -> Result<()> {
         let start = Pt {
-            x: line[0][0] + x as f64,
-            y: line[0][1] + y as f64,
+            x: line[0][0] + x as Float,
+            y: line[0][1] + y as Float,
         };
         let end = Pt {
-            x: line[1][0] + x as f64,
-            y: line[1][1] + y as f64,
+            x: line[1][0] + x as Float,
+            y: line[1][1] + y as Float,
         };
         let start_index = self.index(&start);
         let end_index = self.index(&end);
@@ -212,7 +218,7 @@ impl IsoRingBuilder {
                     .fragment_by_end
                     .remove(&start_index)
                     .ok_or_else(|| new_error(ErrorKind::Unexpected))?;
-                let mut f = self
+                let f = self
                     .f
                     .get_mut(f_ix)
                     .ok_or_else(|| new_error(ErrorKind::Unexpected))?;
@@ -251,7 +257,7 @@ impl IsoRingBuilder {
                     .fragment_by_start
                     .remove(&end_index)
                     .ok_or_else(|| new_error(ErrorKind::Unexpected))?;
-                let mut f = self
+                let f = self
                     .f
                     .get_mut(f_ix)
                     .ok_or_else(|| new_error(ErrorKind::Unexpected))?;
