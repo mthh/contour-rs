@@ -1,5 +1,9 @@
 ## Changelog
 
+### Unreleased changes
+
+- Expose error type (fixes #9).
+
 ### 0.11.0 (2023-10-06)
 
 - Add `f32` feature to use `f32` instead of `f64` for the input values and the computations (thanks to @hakolao).
