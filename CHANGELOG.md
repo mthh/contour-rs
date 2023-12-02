@@ -1,6 +1,6 @@
 ## Changelog
 
-### Unreleased changes
+### 0.12.0 (2023-12-02)
 
 - Expose error type (fixes #9).
 
