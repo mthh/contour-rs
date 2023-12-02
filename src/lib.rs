@@ -79,6 +79,7 @@ pub use crate::contour::Contour;
 pub use crate::contourbuilder::ContourBuilder;
 pub use crate::isoringbuilder::contour_rings;
 pub use crate::line::Line;
+pub use crate::error::{Error, ErrorKind, Result};
 
 #[cfg(test)]
 mod tests {
