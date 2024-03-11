@@ -1,5 +1,9 @@
 ## Changelog
 
+### 0.12.1 (2024-03-11)
+
+- Fix bug in `area` function (fixes #11, thanks to @caspark). Note that given the use made of this function, it probably didn't cause issues with the contours created.
+
 ### 0.12.0 (2023-12-02)
 
 - Expose error type (fixes #9).
