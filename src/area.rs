@@ -1,13 +1,14 @@
 use crate::{Float, Pt};
 
 pub fn area(ring: &[Pt]) -> Float {
-    let mut i = 0;
-    let n = ring.len() - 1;
+    let n = ring.len();
     let mut area = ring[n - 1].y * ring[0].x - ring[n - 1].x * ring[0].y;
-    while i < n {
-        i += 1;
+    for i in 1..n {
         area += ring[i - 1].y * ring[i].x - ring[i - 1].x * ring[i].y;
     }
+    // Note that in the shoelace formula you need to divide this result by 2 to get the actual area.
+    // Here we skip this division because we only use this area formula to calculate the winding
+    // order of polygons and to compare their relative sizes.
     area
 }
 
