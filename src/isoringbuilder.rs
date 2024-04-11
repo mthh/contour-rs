@@ -49,7 +49,7 @@ struct Fragment {
 /// * `threshold` - The threshold value.
 /// * `dx` - The number of columns in the grid.
 /// * `dy` - The number of rows in the grid.
-pub fn contour_rings(values: &[Float], threshold: Float, dx: u32, dy: u32) -> Result<Vec<Ring>> {
+pub fn contour_rings(values: &[Float], threshold: Float, dx: usize, dy: usize) -> Result<Vec<Ring>> {
     let mut isoring = IsoRingBuilder::new(dx, dy);
     isoring.compute(values, threshold)
 }
@@ -59,8 +59,8 @@ pub struct IsoRingBuilder {
     fragment_by_start: FxHashMap<usize, usize>,
     fragment_by_end: FxHashMap<usize, usize>,
     f: Slab<Fragment>,
-    dx: u32,
-    dy: u32,
+    dx: usize,
+    dy: usize,
     is_empty: bool,
 }
 
@@ -70,7 +70,7 @@ impl IsoRingBuilder {
     ///
     /// * `dx` - The number of columns in the grid.
     /// * `dy` - The number of rows in the grid.
-    pub fn new(dx: u32, dy: u32) -> Self {
+    pub fn new(dx: usize, dy: usize) -> Self {
         IsoRingBuilder {
             fragment_by_start: FxHashMap::default(),
             fragment_by_end: FxHashMap::default(),
@@ -103,8 +103,8 @@ impl IsoRingBuilder {
             self.clear();
         }
         let mut result = Vec::new();
-        let dx = self.dx as i32;
-        let dy = self.dy as i32;
+        let dx = self.dx as i64;
+        let dy = self.dy as i64;
         let mut x = -1;
         let mut y = -1;
         let mut t0;
@@ -173,8 +173,8 @@ impl IsoRingBuilder {
     fn stitch(
         &mut self,
         line: &[Vec<Float>],
-        x: i32,
-        y: i32,
+        x: i64,
+        y: i64,
         result: &mut Vec<Ring>,
     ) -> Result<()> {
         let start = Pt {

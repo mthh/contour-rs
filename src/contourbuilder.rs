@@ -12,9 +12,9 @@ use rustc_hash::FxHashMap;
 /// [`contour_rings`]: fn.contour_rings.html
 pub struct ContourBuilder {
     /// The number of columns in the grid
-    dx: u32,
+    dx: usize,
     /// The number of rows in the grid
-    dy: u32,
+    dy: usize,
     /// Whether to smooth the contours
     smooth: bool,
     /// The horizontal coordinate for the origin of the grid.
@@ -38,7 +38,7 @@ impl ContourBuilder {
     /// * `dx` - The number of columns in the grid.
     /// * `dy` - The number of rows in the grid.
     /// * `smooth` - Whether or not the generated rings will be smoothed using linear interpolation.
-    pub fn new(dx: u32, dy: u32, smooth: bool) -> Self {
+    pub fn new(dx: usize, dy: usize, smooth: bool) -> Self {
         ContourBuilder {
             dx,
             dy,
@@ -83,8 +83,8 @@ impl ContourBuilder {
             .map(|point| {
                 let x = point.x;
                 let y = point.y;
-                let xt = x.trunc() as u32;
-                let yt = y.trunc() as u32;
+                let xt = x.trunc() as usize;
+                let yt = y.trunc() as usize;
                 let mut v0;
                 let ix = (yt * dx + xt) as usize;
                 if ix < len_values {
@@ -112,7 +112,7 @@ impl ContourBuilder {
     /// * `values` - The slice of values to be used.
     /// * `thresholds` - The slice of thresholds values to be used.
     pub fn lines(&self, values: &[Float], thresholds: &[Float]) -> Result<Vec<Line>> {
-        if values.len() as u32 != self.dx * self.dy {
+        if values.len() != self.dx * self.dy {
             return Err(new_error(ErrorKind::BadDimension));
         }
         let mut isoring = IsoRingBuilder::new(self.dx, self.dy);
@@ -163,7 +163,7 @@ impl ContourBuilder {
     /// * `values` - The slice of values to be used.
     /// * `thresholds` - The slice of thresholds values to be used.
     pub fn contours(&self, values: &[Float], thresholds: &[Float]) -> Result<Vec<Contour>> {
-        if values.len() as u32 != self.dx * self.dy {
+        if values.len() != self.dx * self.dy {
             return Err(new_error(ErrorKind::BadDimension));
         }
         let mut isoring = IsoRingBuilder::new(self.dx, self.dy);
@@ -232,7 +232,7 @@ impl ContourBuilder {
         // We will compute rings as previously, but we will
         // iterate over the contours in pairs and use the paths from the lower threshold
         // and the path from the upper threshold to create the isoband.
-        if values.len() as u32 != self.dx * self.dy {
+        if values.len() != self.dx * self.dy {
             return Err(new_error(ErrorKind::BadDimension));
         }
         if thresholds.len() < 2 {
