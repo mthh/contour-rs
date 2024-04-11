@@ -86,15 +86,15 @@ impl ContourBuilder {
                 let xt = x.trunc() as usize;
                 let yt = y.trunc() as usize;
                 let mut v0;
-                let ix = (yt * dx + xt) as usize;
+                let ix = yt * dx + xt;
                 if ix < len_values {
                     let v1 = values[ix];
                     if x > 0.0 && x < (dx as Float) && (xt as Float - x).abs() < Float::EPSILON {
-                        v0 = values[(yt * dx + xt - 1) as usize];
+                        v0 = values[yt * dx + xt - 1];
                         point.x = x + (value - v0) / (v1 - v0) - 0.5;
                     }
                     if y > 0.0 && y < (dy as Float) && (yt as Float - y).abs() < Float::EPSILON {
-                        v0 = values[((yt - 1) * dx + xt) as usize];
+                        v0 = values[(yt - 1) * dx + xt];
                         point.y = y + (value - v0) / (v1 - v0) - 0.5;
                     }
                 }

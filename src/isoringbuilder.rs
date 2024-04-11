@@ -113,54 +113,54 @@ impl IsoRingBuilder {
         let mut t3;
 
         // Special case for the first row (y = -1, t2 = t3 = 0).
-        t1 = (values[0] >= threshold) as u32;
-        case_stitch!((t1 << 1) as usize, x, y, &mut result);
+        t1 = (values[0] >= threshold) as usize;
+        case_stitch!(t1 << 1, x, y, &mut result);
         x += 1;
         while x < dx - 1 {
             t0 = t1;
-            t1 = (values[(x + 1) as usize] >= threshold) as u32;
-            case_stitch!((t0 | t1 << 1) as usize, x, y, &mut result);
+            t1 = (values[(x + 1) as usize] >= threshold) as usize;
+            case_stitch!(t0 | t1 << 1, x, y, &mut result);
             x += 1;
         }
-        case_stitch!(t1 as usize, x, y, &mut result);
+        case_stitch!(t1, x, y, &mut result);
 
         // General case for the intermediate rows.
         y += 1;
         while y < dy - 1 {
             x = -1;
-            t1 = (values[(y * dx + dx) as usize] >= threshold) as u32;
-            t2 = (values[(y * dx) as usize] >= threshold) as u32;
-            case_stitch!((t1 << 1 | t2 << 2) as usize, x, y, &mut result);
+            t1 = (values[(y * dx + dx) as usize] >= threshold) as usize;
+            t2 = (values[(y * dx) as usize] >= threshold) as usize;
+            case_stitch!(t1 << 1 | t2 << 2, x, y, &mut result);
             x += 1;
             while x < dx - 1 {
                 t0 = t1;
-                t1 = (values[(y * dx + dx + x + 1) as usize] >= threshold) as u32;
+                t1 = (values[(y * dx + dx + x + 1) as usize] >= threshold) as usize;
                 t3 = t2;
-                t2 = (values[(y * dx + x + 1) as usize] >= threshold) as u32;
+                t2 = (values[(y * dx + x + 1) as usize] >= threshold) as usize;
                 case_stitch!(
-                    (t0 | t1 << 1 | t2 << 2 | t3 << 3) as usize,
+                    t0 | t1 << 1 | t2 << 2 | t3 << 3,
                     x,
                     y,
                     &mut result
                 );
                 x += 1;
             }
-            case_stitch!((t1 | t2 << 3) as usize, x, y, &mut result);
+            case_stitch!(t1 | t2 << 3, x, y, &mut result);
             y += 1;
         }
 
         // Special case for the last row (y = dy - 1, t0 = t1 = 0).
         x = -1;
-        t2 = (values[(y * dx) as usize] >= threshold) as u32;
-        case_stitch!((t2 << 2) as usize, x, y, &mut result);
+        t2 = (values[(y * dx) as usize] >= threshold) as usize;
+        case_stitch!(t2 << 2, x, y, &mut result);
         x += 1;
         while x < dx - 1 {
             t3 = t2;
-            t2 = (values[(y * dx + x + 1) as usize] >= threshold) as u32;
-            case_stitch!((t2 << 2 | t3 << 3) as usize, x, y, &mut result);
+            t2 = (values[(y * dx + x + 1) as usize] >= threshold) as usize;
+            case_stitch!(t2 << 2 | t3 << 3, x, y, &mut result);
             x += 1;
         }
-        case_stitch!((t2 << 3) as usize, x, y, &mut result);
+        case_stitch!(t2 << 3, x, y, &mut result);
         self.is_empty = false;
         Ok(result)
     }
