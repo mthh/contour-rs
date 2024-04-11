@@ -21,8 +21,8 @@ fn main() {
             }
         })
         .collect();
-    let h = raw_data["height"].as_u64().unwrap() as u32;
-    let w = raw_data["width"].as_u64().unwrap() as u32;
+    let h = raw_data["height"].as_u64().unwrap() as usize;
+    let w = raw_data["width"].as_u64().unwrap() as usize;
 
     let x_origin = -6.144721171428571;
     let y_origin = 51.78171334283718;
@@ -75,8 +75,8 @@ fn main() {
             }
         })
         .collect();
-    let h = raw_data["height"].as_u64().unwrap() as u32;
-    let w = raw_data["width"].as_u64().unwrap() as u32;
+    let h = raw_data["height"].as_u64().unwrap() as usize;
+    let w = raw_data["width"].as_u64().unwrap() as usize;
 
     let contours = ContourBuilder::new(w, h, true)
         .isobands(
