@@ -74,7 +74,7 @@ impl ContourBuilder {
         self
     }
 
-    fn smoooth_linear(&self, ring: &mut Ring, values: &[Float], value: Float) {
+    fn smooth_linear(&self, ring: &mut Ring, values: &[Float], value: Float) {
         let dx = self.dx;
         let dy = self.dy;
         let len_values = values.len();
@@ -134,7 +134,7 @@ impl ContourBuilder {
         result.drain(..).for_each(|mut ring| {
             // Smooth the ring if needed
             if self.smooth {
-                self.smoooth_linear(&mut ring, values, threshold);
+                self.smooth_linear(&mut ring, values, threshold);
             }
             // Compute the polygon coordinates according to the grid properties if needed
             if (self.x_origin, self.y_origin) != (0.0, 0.0)
@@ -185,7 +185,7 @@ impl ContourBuilder {
         result.drain(..).for_each(|mut ring| {
             // Smooth the ring if needed
             if self.smooth {
-                self.smoooth_linear(&mut ring, values, threshold);
+                self.smooth_linear(&mut ring, values, threshold);
             }
             // Compute the polygon coordinates according to the grid properties if needed
             if (self.x_origin, self.y_origin) != (0.0, 0.0)
@@ -250,7 +250,7 @@ impl ContourBuilder {
                     .map(|mut ring| {
                         // Smooth the ring if needed
                         if self.smooth {
-                            self.smoooth_linear(&mut ring, values, *threshold);
+                            self.smooth_linear(&mut ring, values, *threshold);
                         }
                         ring.dedup();
                         // Compute the polygon coordinates according to the grid properties if needed
