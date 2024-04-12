@@ -49,7 +49,12 @@ struct Fragment {
 /// * `threshold` - The threshold value.
 /// * `dx` - The number of columns in the grid.
 /// * `dy` - The number of rows in the grid.
-pub fn contour_rings(values: &[Float], threshold: Float, dx: usize, dy: usize) -> Result<Vec<Ring>> {
+pub fn contour_rings(
+    values: &[Float],
+    threshold: Float,
+    dx: usize,
+    dy: usize,
+) -> Result<Vec<Ring>> {
     let mut isoring = IsoRingBuilder::new(dx, dy);
     isoring.compute(values, threshold)
 }
@@ -137,12 +142,7 @@ impl IsoRingBuilder {
                 t1 = (values[(y * dx + dx + x + 1) as usize] >= threshold) as usize;
                 t3 = t2;
                 t2 = (values[(y * dx + x + 1) as usize] >= threshold) as usize;
-                case_stitch!(
-                    t0 | t1 << 1 | t2 << 2 | t3 << 3,
-                    x,
-                    y,
-                    &mut result
-                );
+                case_stitch!(t0 | t1 << 1 | t2 << 2 | t3 << 3, x, y, &mut result);
                 x += 1;
             }
             case_stitch!(t1 | t2 << 3, x, y, &mut result);
