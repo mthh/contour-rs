@@ -1,6 +1,4 @@
-use std::error::Error as StdError;
-use std::fmt;
-use std::result;
+use std::{error::Error as StdError, fmt, result};
 
 /// A crate private constructor for `Error`.
 pub(crate) fn new_error(kind: ErrorKind) -> Error {
@@ -32,6 +30,7 @@ impl Error {
 pub enum ErrorKind {
     BadDimension,
     Unexpected,
+    BadCast,
     #[cfg(feature = "geojson")]
     JsonError(serde_json::error::Error),
 }
@@ -48,6 +47,7 @@ impl StdError for Error {
         match *self.0 {
             ErrorKind::BadDimension => None,
             ErrorKind::Unexpected => None,
+            ErrorKind::BadCast => None,
             #[cfg(feature = "geojson")]
             ErrorKind::JsonError(ref err) => Some(err),
         }
@@ -62,6 +62,7 @@ impl fmt::Display for Error {
                 "The length of provided values doesn't match the (dx, dy) dimensions of the grid"
             ),
             ErrorKind::Unexpected => write!(f, "Unexpected error while computing contours"),
+            ErrorKind::BadCast => write!(f, "Failed to cast grid value to Float"),
             #[cfg(feature = "geojson")]
             ErrorKind::JsonError(ref err) => err.fmt(f),
         }

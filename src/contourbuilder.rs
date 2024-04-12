@@ -1,7 +1,9 @@
-use crate::area::{area, contains};
-use crate::error::{new_error, ErrorKind, Result};
-use crate::isoringbuilder::IsoRingBuilder;
-use crate::{Band, Contour, Float, Line, Ring};
+use crate::{
+    area::{area, contains},
+    error::{new_error, ErrorKind, Result},
+    isoringbuilder::IsoRingBuilder,
+    Band, Contour, Error, Float, GridValue, Line, Ring,
+};
 use geo_types::{LineString, MultiLineString, MultiPolygon, Polygon};
 use rustc_hash::FxHashMap;
 
@@ -74,32 +76,39 @@ impl ContourBuilder {
         self
     }
 
-    fn smooth_linear(&self, ring: &mut Ring, values: &[Float], value: Float) {
+    fn smooth_linear<V: GridValue>(&self, ring: &mut Ring, values: &[V], value: V) -> Result<()> {
         let dx = self.dx;
         let dy = self.dy;
         let len_values = values.len();
 
-        ring.iter_mut()
-            .map(|point| {
-                let x = point.x;
-                let y = point.y;
-                let xt = x.trunc() as usize;
-                let yt = y.trunc() as usize;
-                let mut v0;
-                let ix = yt * dx + xt;
-                if ix < len_values {
-                    let v1 = values[ix];
-                    if x > 0.0 && x < (dx as Float) && (xt as Float - x).abs() < Float::EPSILON {
-                        v0 = values[yt * dx + xt - 1];
-                        point.x = x + (value - v0) / (v1 - v0) - 0.5;
-                    }
-                    if y > 0.0 && y < (dy as Float) && (yt as Float - y).abs() < Float::EPSILON {
-                        v0 = values[(yt - 1) * dx + xt];
-                        point.y = y + (value - v0) / (v1 - v0) - 0.5;
-                    }
+        macro_rules! cast {
+            ($num:expr) => {
+                num_traits::cast::<V, Float>($num).ok_or_else(|| new_error(ErrorKind::BadCast))
+            };
+        }
+
+        ring.iter_mut().try_for_each(|point| {
+            let x = point.x;
+            let y = point.y;
+            let xt = x.trunc() as usize;
+            let yt = y.trunc() as usize;
+            let mut v0;
+            let ix = yt * dx + xt;
+            if ix < len_values {
+                let v1 = values[ix];
+                if x > 0.0 && x < (dx as Float) && (xt as Float - x).abs() < Float::EPSILON {
+                    v0 = values[yt * dx + xt - 1];
+                    point.x = x + (cast!(value)? - cast!(v0)?) / (cast!(v1)? - cast!(v0)?) - 0.5;
                 }
-            })
-            .for_each(drop);
+                if y > 0.0 && y < (dy as Float) && (yt as Float - y).abs() < Float::EPSILON {
+                    v0 = values[(yt - 1) * dx + xt];
+                    point.y = y + (cast!(value)? - cast!(v0)?) / (cast!(v1)? - cast!(v0)?) - 0.5;
+                }
+            }
+            Ok::<_, Error>(())
+        })?;
+
+        Ok(())
     }
 
     /// Computes isolines according the given input `values` and the given `thresholds`.
@@ -111,7 +120,7 @@ impl ContourBuilder {
     ///
     /// * `values` - The slice of values to be used.
     /// * `thresholds` - The slice of thresholds values to be used.
-    pub fn lines(&self, values: &[Float], thresholds: &[Float]) -> Result<Vec<Line>> {
+    pub fn lines<V: GridValue>(&self, values: &[V], thresholds: &[V]) -> Result<Vec<Line<V>>> {
         if values.len() != self.dx * self.dy {
             return Err(new_error(ErrorKind::BadDimension));
         }
@@ -122,19 +131,19 @@ impl ContourBuilder {
             .collect()
     }
 
-    fn line(
+    fn line<V: GridValue>(
         &self,
-        values: &[Float],
-        threshold: Float,
+        values: &[V],
+        threshold: V,
         isoring: &mut IsoRingBuilder,
-    ) -> Result<Line> {
+    ) -> Result<Line<V>> {
         let mut result = isoring.compute(values, threshold)?;
         let mut linestrings = Vec::new();
 
-        result.drain(..).for_each(|mut ring| {
+        result.drain(..).try_for_each(|mut ring| {
             // Smooth the ring if needed
             if self.smooth {
-                self.smooth_linear(&mut ring, values, threshold);
+                self.smooth_linear(&mut ring, values, threshold)?;
             }
             // Compute the polygon coordinates according to the grid properties if needed
             if (self.x_origin, self.y_origin) != (0.0, 0.0)
@@ -146,9 +155,11 @@ impl ContourBuilder {
                 });
             }
             linestrings.push(LineString(ring));
-        });
+            Ok::<_, Error>(())
+        })?;
+
         Ok(Line {
-            geometry: MultiLineString::<Float>(linestrings),
+            geometry: MultiLineString(linestrings),
             threshold,
         })
     }
@@ -162,7 +173,11 @@ impl ContourBuilder {
     ///
     /// * `values` - The slice of values to be used.
     /// * `thresholds` - The slice of thresholds values to be used.
-    pub fn contours(&self, values: &[Float], thresholds: &[Float]) -> Result<Vec<Contour>> {
+    pub fn contours<V: GridValue>(
+        &self,
+        values: &[V],
+        thresholds: &[V],
+    ) -> Result<Vec<Contour<V>>> {
         if values.len() != self.dx * self.dy {
             return Err(new_error(ErrorKind::BadDimension));
         }
@@ -173,19 +188,19 @@ impl ContourBuilder {
             .collect()
     }
 
-    fn contour(
+    fn contour<V: GridValue>(
         &self,
-        values: &[Float],
-        threshold: Float,
+        values: &[V],
+        threshold: V,
         isoring: &mut IsoRingBuilder,
-    ) -> Result<Contour> {
+    ) -> Result<Contour<V>> {
         let (mut polygons, mut holes) = (Vec::new(), Vec::new());
         let mut result = isoring.compute(values, threshold)?;
 
-        result.drain(..).for_each(|mut ring| {
+        result.drain(..).try_for_each(|mut ring| {
             // Smooth the ring if needed
             if self.smooth {
-                self.smooth_linear(&mut ring, values, threshold);
+                self.smooth_linear(&mut ring, values, threshold)?;
             }
             // Compute the polygon coordinates according to the grid properties if needed
             if (self.x_origin, self.y_origin) != (0.0, 0.0)
@@ -197,11 +212,13 @@ impl ContourBuilder {
                 });
             }
             if area(&ring) > 0.0 {
-                polygons.push(Polygon::<Float>::new(LineString::new(ring), vec![]))
+                polygons.push(Polygon::new(LineString::new(ring), vec![]))
             } else {
                 holes.push(LineString::new(ring));
             }
-        });
+
+            Ok::<_, Error>(())
+        })?;
 
         holes.drain(..).for_each(|hole| {
             for polygon in &mut polygons {
@@ -213,7 +230,7 @@ impl ContourBuilder {
         });
 
         Ok(Contour {
-            geometry: MultiPolygon::<Float>(polygons),
+            geometry: MultiPolygon(polygons),
             threshold,
         })
     }
@@ -228,7 +245,7 @@ impl ContourBuilder {
     /// * `values` - The slice of values to be used.
     /// * `thresholds` - The slice of thresholds values to be used
     ///                  (have to be equal to or greater than 2).
-    pub fn isobands(&self, values: &[Float], thresholds: &[Float]) -> Result<Vec<Band>> {
+    pub fn isobands<V: GridValue>(&self, values: &[V], thresholds: &[V]) -> Result<Vec<Band<V>>> {
         // We will compute rings as previously, but we will
         // iterate over the contours in pairs and use the paths from the lower threshold
         // and the path from the upper threshold to create the isoband.
@@ -250,7 +267,7 @@ impl ContourBuilder {
                     .map(|mut ring| {
                         // Smooth the ring if needed
                         if self.smooth {
-                            self.smooth_linear(&mut ring, values, *threshold);
+                            self.smooth_linear(&mut ring, values, *threshold)?;
                         }
                         ring.dedup();
                         // Compute the polygon coordinates according to the grid properties if needed
@@ -262,13 +279,13 @@ impl ContourBuilder {
                                 point.y = point.y * self.y_step + self.y_origin;
                             });
                         }
-                        ring
+                        Ok(ring)
                     })
-                    .filter(|ring| ring.len() > 3)
-                    .collect::<Vec<Ring>>();
+                    .filter(|ring| ring.as_ref().map(|v| v.len() > 3).unwrap_or(true))
+                    .collect::<Result<Vec<Ring>>>()?;
                 Ok((rings, *threshold))
             })
-            .collect::<Result<Vec<(Vec<Ring>, Float)>>>()?;
+            .collect::<Result<Vec<(Vec<Ring>, V)>>>()?;
 
         // We now have the rings for each isolines for all the given thresholds,
         // we can iterate over them in pairs to compute the isobands.
@@ -281,7 +298,7 @@ impl ContourBuilder {
             })
             .collect::<Vec<_>>();
 
-        let mut bands: Vec<Band> = Vec::new();
+        let mut bands: Vec<Band<V>> = Vec::new();
         // Reconstruction of the polygons
         b.into_iter().for_each(|(rings, min_v, max_v)| {
             let mut rings_and_area = rings
@@ -314,7 +331,7 @@ impl ContourBuilder {
 
             for (i, (ring, _)) in rings_and_area.into_iter().enumerate() {
                 if *enclosed_by_n.get(&i).unwrap() % 2 == 0 {
-                    polygons.push(Polygon::<Float>::new(ring.into(), vec![]));
+                    polygons.push(Polygon::new(ring.into(), vec![]));
                 } else {
                     interior_rings.push(ring.into());
                 }
@@ -331,7 +348,7 @@ impl ContourBuilder {
             polygons.reverse();
 
             bands.push(Band {
-                geometry: MultiPolygon::<Float>(polygons),
+                geometry: MultiPolygon(polygons),
                 min_v: *min_v,
                 max_v: *max_v,
             });
