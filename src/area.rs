@@ -1,10 +1,15 @@
 use crate::{Float, Pt};
 
-pub fn area(ring: &[Pt]) -> Float {
+#[allow(clippy::unnecessary_cast)]
+// Note that we need to disable the clippy warning about unnecessary casts
+// because of the "f32" optional feature (and because we want to ensure we always
+// use "f64" in this function, both in the default feature and in the "f32" feature).
+pub fn area(ring: &[Pt]) -> f64 {
     let n = ring.len();
-    let mut area = ring[n - 1].y * ring[0].x - ring[n - 1].x * ring[0].y;
+    let mut area =
+        ring[n - 1].y as f64 * ring[0].x as f64 - ring[n - 1].x as f64 * ring[0].y as f64;
     for i in 1..n {
-        area += ring[i - 1].y * ring[i].x - ring[i - 1].x * ring[i].y;
+        area += ring[i - 1].y as f64 * ring[i].x as f64 - ring[i - 1].x as f64 * ring[i].y as f64;
     }
     // Note that in the shoelace formula you need to divide this result by 2 to get the actual area.
     // Here we skip this division because we only use this area formula to calculate the winding
