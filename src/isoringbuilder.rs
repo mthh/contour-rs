@@ -49,7 +49,12 @@ struct Fragment {
 /// * `threshold` - The threshold value.
 /// * `dx` - The number of columns in the grid.
 /// * `dy` - The number of rows in the grid.
-pub fn contour_rings(values: &[Float], threshold: Float, dx: u32, dy: u32) -> Result<Vec<Ring>> {
+pub fn contour_rings(
+    values: &[Float],
+    threshold: Float,
+    dx: usize,
+    dy: usize,
+) -> Result<Vec<Ring>> {
     let mut isoring = IsoRingBuilder::new(dx, dy);
     isoring.compute(values, threshold)
 }
@@ -59,8 +64,8 @@ pub struct IsoRingBuilder {
     fragment_by_start: FxHashMap<usize, usize>,
     fragment_by_end: FxHashMap<usize, usize>,
     f: Slab<Fragment>,
-    dx: u32,
-    dy: u32,
+    dx: usize,
+    dy: usize,
     is_empty: bool,
 }
 
@@ -70,7 +75,7 @@ impl IsoRingBuilder {
     ///
     /// * `dx` - The number of columns in the grid.
     /// * `dy` - The number of rows in the grid.
-    pub fn new(dx: u32, dy: u32) -> Self {
+    pub fn new(dx: usize, dy: usize) -> Self {
         IsoRingBuilder {
             fragment_by_start: FxHashMap::default(),
             fragment_by_end: FxHashMap::default(),
@@ -103,8 +108,8 @@ impl IsoRingBuilder {
             self.clear();
         }
         let mut result = Vec::new();
-        let dx = self.dx as i32;
-        let dy = self.dy as i32;
+        let dx = self.dx as i64;
+        let dy = self.dy as i64;
         let mut x = -1;
         let mut y = -1;
         let mut t0;
@@ -113,68 +118,63 @@ impl IsoRingBuilder {
         let mut t3;
 
         // Special case for the first row (y = -1, t2 = t3 = 0).
-        t1 = (values[0] >= threshold) as u32;
-        case_stitch!((t1 << 1) as usize, x, y, &mut result);
+        t1 = (values[0] >= threshold) as usize;
+        case_stitch!(t1 << 1, x, y, &mut result);
         x += 1;
         while x < dx - 1 {
             t0 = t1;
-            t1 = (values[(x + 1) as usize] >= threshold) as u32;
-            case_stitch!((t0 | t1 << 1) as usize, x, y, &mut result);
+            t1 = (values[(x + 1) as usize] >= threshold) as usize;
+            case_stitch!(t0 | t1 << 1, x, y, &mut result);
             x += 1;
         }
-        case_stitch!(t1 as usize, x, y, &mut result);
+        case_stitch!(t1, x, y, &mut result);
 
         // General case for the intermediate rows.
         y += 1;
         while y < dy - 1 {
             x = -1;
-            t1 = (values[(y * dx + dx) as usize] >= threshold) as u32;
-            t2 = (values[(y * dx) as usize] >= threshold) as u32;
-            case_stitch!((t1 << 1 | t2 << 2) as usize, x, y, &mut result);
+            t1 = (values[(y * dx + dx) as usize] >= threshold) as usize;
+            t2 = (values[(y * dx) as usize] >= threshold) as usize;
+            case_stitch!(t1 << 1 | t2 << 2, x, y, &mut result);
             x += 1;
             while x < dx - 1 {
                 t0 = t1;
-                t1 = (values[(y * dx + dx + x + 1) as usize] >= threshold) as u32;
+                t1 = (values[(y * dx + dx + x + 1) as usize] >= threshold) as usize;
                 t3 = t2;
-                t2 = (values[(y * dx + x + 1) as usize] >= threshold) as u32;
-                case_stitch!(
-                    (t0 | t1 << 1 | t2 << 2 | t3 << 3) as usize,
-                    x,
-                    y,
-                    &mut result
-                );
+                t2 = (values[(y * dx + x + 1) as usize] >= threshold) as usize;
+                case_stitch!(t0 | t1 << 1 | t2 << 2 | t3 << 3, x, y, &mut result);
                 x += 1;
             }
-            case_stitch!((t1 | t2 << 3) as usize, x, y, &mut result);
+            case_stitch!(t1 | t2 << 3, x, y, &mut result);
             y += 1;
         }
 
         // Special case for the last row (y = dy - 1, t0 = t1 = 0).
         x = -1;
-        t2 = (values[(y * dx) as usize] >= threshold) as u32;
-        case_stitch!((t2 << 2) as usize, x, y, &mut result);
+        t2 = (values[(y * dx) as usize] >= threshold) as usize;
+        case_stitch!(t2 << 2, x, y, &mut result);
         x += 1;
         while x < dx - 1 {
             t3 = t2;
-            t2 = (values[(y * dx + x + 1) as usize] >= threshold) as u32;
-            case_stitch!((t2 << 2 | t3 << 3) as usize, x, y, &mut result);
+            t2 = (values[(y * dx + x + 1) as usize] >= threshold) as usize;
+            case_stitch!(t2 << 2 | t3 << 3, x, y, &mut result);
             x += 1;
         }
-        case_stitch!((t2 << 3) as usize, x, y, &mut result);
+        case_stitch!(t2 << 3, x, y, &mut result);
         self.is_empty = false;
         Ok(result)
     }
 
     fn index(&self, point: &Pt) -> usize {
-        (point.x * 2.0 + point.y * (self.dx as Float + 1.) * 4.) as usize
+        (point.x as usize) * 2 + (point.y as usize) * (self.dx + 1usize) * 4
     }
 
     // Stitchs segments to rings.
     fn stitch(
         &mut self,
         line: &[Vec<Float>],
-        x: i32,
-        y: i32,
+        x: i64,
+        y: i64,
         result: &mut Vec<Ring>,
     ) -> Result<()> {
         let start = Pt {

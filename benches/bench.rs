@@ -90,8 +90,8 @@ fn bench_contourbuilder_isobands_volcano_without_xy_step_xy_origin(b: &mut Bench
         .iter()
         .map(|x| x.as_f64().unwrap())
         .collect();
-    let h = raw_data["height"].as_u64().unwrap() as u32;
-    let w = raw_data["width"].as_u64().unwrap() as u32;
+    let h = raw_data["height"].as_u64().unwrap() as usize;
+    let w = raw_data["width"].as_u64().unwrap() as usize;
 
     b.iter(|| {
         black_box(
@@ -118,8 +118,8 @@ fn bench_contourbuilder_isobands_pot_pop_fr_without_xy_step_xy_origin(b: &mut Be
         .iter()
         .map(|x| x.as_f64().unwrap())
         .collect();
-    let h = raw_data["height"].as_u64().unwrap() as u32;
-    let w = raw_data["width"].as_u64().unwrap() as u32;
+    let h = raw_data["height"].as_u64().unwrap() as usize;
+    let w = raw_data["width"].as_u64().unwrap() as usize;
 
     b.iter(|| {
         black_box(
