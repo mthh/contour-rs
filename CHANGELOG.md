@@ -1,5 +1,13 @@
 ## Changelog
 
+### 0.13.0 (2024-04-15)
+
+- BREAKING: Change the signature of `ContourBuilder::new` to take a `usize` instead of an `u32` for the dimensions of the grid.
+  This is more idiomatic and consistent with the rest of the Rust ecosystem and enables the use of larger grids
+  (thanks to @netthier, see #12 and #13 for details).
+
+- Fix artifacts in the contours obtained when using the `f32` feature and large grids (thanks to @netthier, see #12 and #13 for details).
+
 ### 0.12.1 (2024-03-11)
 
 - Fix bug in `area` function (fixes #11, thanks to @caspark). Note that given the use made of this function, it probably didn't cause issues with the contours created.
