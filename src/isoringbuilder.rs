@@ -166,7 +166,7 @@ impl IsoRingBuilder {
     }
 
     fn index(&self, point: &Pt) -> usize {
-        (point.x as usize) * 2 + (point.y as usize) * (self.dx + 1usize) * 4
+        (point.x as f64 * 2.0 + point.y as f64 * ((self.dx + 1) * 4) as f64) as usize
     }
 
     // Stitchs segments to rings.
