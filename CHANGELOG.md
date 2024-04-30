@@ -1,5 +1,9 @@
 ## Changelog
 
+### 0.13.1 (2024-04-30)
+
+- Fix bug introduced in 0.13.0 that caused the returned contours to be sometimes erroneous (fixes #18).
+
 ### 0.13.0 (2024-04-15)
 
 - BREAKING: Change the signature of `ContourBuilder::new` to take a `usize` instead of an `u32` for the dimensions of the grid.

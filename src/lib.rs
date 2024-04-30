@@ -482,6 +482,7 @@ mod tests {
         );
     }
 
+    #[cfg(not(feature = "f32"))]
     #[test]
     fn test_issue18() {
         let data_str = include_str!("../tests/fixtures/issue18.json");

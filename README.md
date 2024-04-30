@@ -19,7 +19,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-contour = "0.13.0"
+contour = "0.13.1"
 ```
 
 and this to your crate root:
@@ -90,7 +90,7 @@ The `geojson` feature is not enabled by default, so you need to specify it in yo
 
 ```toml
 [dependencies]
-contour = { version = "0.13.0", features = ["geojson"] }
+contour = { version = "0.13.1", features = ["geojson"] }
 ```
 
 ```rust
@@ -150,7 +150,7 @@ If you want to use `f32` values instead, you need to specify the `f32` feature i
 
 ```toml
 [dependencies]
-contour = { version = "0.13.0", features = ["f32"] }
+contour = { version = "0.13.1", features = ["f32"] }
 ```
 
 ## WASM demo

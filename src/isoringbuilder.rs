@@ -165,6 +165,7 @@ impl IsoRingBuilder {
         Ok(result)
     }
 
+    #[allow(clippy::unnecessary_cast)]
     fn index(&self, point: &Pt) -> usize {
         (point.x as f64 * 2.0 + point.y as f64 * ((self.dx + 1) * 4) as f64) as usize
     }
