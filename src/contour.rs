@@ -1,7 +1,7 @@
 use crate::Float;
 use geo_types::MultiPolygon;
 
-/// A contour has the geometry and threshold of a contour ring, built by [`ContourBuilder`].
+/// A contour has the geometry and threshold of a contour ring, built by [ContourBuilder](`crate::contourbuilder::ContourBuilder`).
 #[derive(Debug, Clone)]
 pub struct Contour {
     pub(crate) geometry: MultiPolygon<Float>,

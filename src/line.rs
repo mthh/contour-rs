@@ -1,7 +1,7 @@
 use crate::Float;
 use geo_types::MultiLineString;
 
-/// A line has the geometry and threshold of a contour ring, built by [`ContourBuilder`].
+/// A line has the geometry and threshold of a contour ring, built by [ContourBuilder](`crate::contourbuilder::ContourBuilder`).
 #[derive(Debug, Clone)]
 pub struct Line {
     pub(crate) geometry: MultiLineString<Float>,

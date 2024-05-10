@@ -1,7 +1,7 @@
 use crate::Float;
 use geo_types::MultiPolygon;
 
-/// An isoband has the geometry and min / max values of a contour ring, built by [`ContourBuilder`].
+/// An isoband has the geometry and min / max values of a contour ring, built by [ContourBuilder](`crate::contourbuilder::ContourBuilder`).
 #[derive(Debug, Clone)]
 pub struct Band {
     pub(crate) geometry: MultiPolygon<Float>,

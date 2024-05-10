@@ -3,7 +3,7 @@
 //! [marching squares](https://en.wikipedia.org/wiki/Marching_squares)
 //! to a rectangular array of numeric values.
 //!
-//! Use the [`ContourBuilder`]) to compute for a given set of values and thresholds:
+//! Use the [`ContourBuilder`] to compute for a given set of values and thresholds:
 //! - isolines, as a Vec of [`Line`],
 //! - contour polygons, as a Vec of [`Contour`],
 //! - isobands, as a Vec of [`Band`].
