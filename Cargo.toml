@@ -14,17 +14,19 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 geojson = { version = ">=0.16, <=0.24", optional = true }
-geo-types= { version = "0.7" }
+geo-types = { version = "0.7" }
 lazy_static = "1.0"
 serde_json = { version = "^1.0", optional = true }
+serde = { version = "1.0", optional = true }
 rustc-hash = "1.0"
 slab = "0.4"
+num-traits = "0.2"
 
 [dev-dependencies]
 serde_json = "^1.0"
 
 [features]
-geojson = ["dep:geojson", "dep:serde_json"]
+geojson = ["dep:geojson", "dep:serde_json", "dep:serde"]
 f32 = []
 
 [package.metadata.docs.rs]

@@ -2,8 +2,7 @@
 extern crate contour;
 extern crate test;
 
-use contour::contour_rings;
-use contour::ContourBuilder;
+use contour::{contour_rings, ContourBuilder};
 use test::{black_box, Bencher};
 
 #[rustfmt::skip]

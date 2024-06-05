@@ -1,5 +1,8 @@
-use crate::error::{new_error, ErrorKind, Result};
-use crate::{Float, Pt, Ring};
+use crate::{
+    error::{new_error, ErrorKind, Result},
+    Float, GridValue, Pt, Ring,
+};
+use geo_types::Coord;
 use lazy_static::lazy_static;
 use rustc_hash::FxHashMap;
 use slab::Slab;
@@ -49,9 +52,10 @@ struct Fragment {
 /// * `threshold` - The threshold value.
 /// * `dx` - The number of columns in the grid.
 /// * `dy` - The number of rows in the grid.
-pub fn contour_rings(
-    values: &[Float],
-    threshold: Float,
+
+pub fn contour_rings<V: GridValue>(
+    values: &[V],
+    threshold: V,
     dx: usize,
     dy: usize,
 ) -> Result<Vec<Ring>> {
@@ -94,7 +98,7 @@ impl IsoRingBuilder {
     ///
     /// * `values` - The slice of values to be used.
     /// * `threshold` - The threshold value to use.
-    pub fn compute(&mut self, values: &[Float], threshold: Float) -> Result<Vec<Ring>> {
+    pub fn compute<V: GridValue>(&mut self, values: &[V], threshold: V) -> Result<Vec<Ring>> {
         macro_rules! case_stitch {
             ($ix:expr, $x:ident, $y:ident, $result:expr) => {
                 CASES[$ix]
@@ -170,7 +174,7 @@ impl IsoRingBuilder {
         (point.x as f64 * 2.0 + point.y as f64 * ((self.dx + 1) * 4) as f64) as usize
     }
 
-    // Stitchs segments to rings.
+    // Stitches segments to rings.
     fn stitch(
         &mut self,
         line: &[Vec<Float>],
@@ -178,11 +182,11 @@ impl IsoRingBuilder {
         y: i64,
         result: &mut Vec<Ring>,
     ) -> Result<()> {
-        let start = Pt {
+        let start = Coord {
             x: line[0][0] + x as Float,
             y: line[0][1] + y as Float,
         };
-        let end = Pt {
+        let end = Coord {
             x: line[1][0] + x as Float,
             y: line[1][1] + y as Float,
         };

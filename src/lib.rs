@@ -49,7 +49,7 @@
 //!   "properties": {"threshold": 0.5},
 //! });
 //!
-//! assert_eq!(res[0].to_geojson(), std::convert::TryFrom::try_from(output).unwrap());
+//! assert_eq!(res[0].to_geojson().unwrap(), std::convert::TryFrom::try_from(output).unwrap());
 //! ```
 //!
 //! [`contour_rings`]: fn.contour_rings.html
@@ -63,23 +63,26 @@ mod error;
 mod isoringbuilder;
 mod line;
 
+pub trait GridValue: PartialOrd + Copy + Num + NumCast {}
+impl<T> GridValue for T where T: PartialOrd + Copy + Num + NumCast {}
+
 #[cfg(feature = "f32")]
 pub type Float = f32;
 #[cfg(not(feature = "f32"))]
 pub type Float = f64;
-#[cfg(feature = "f32")]
-pub type Pt = geo_types::Coord<f32>;
-#[cfg(not(feature = "f32"))]
-pub type Pt = geo_types::Coord;
 
+pub type Pt = geo_types::Coord<Float>;
 pub type Ring = Vec<Pt>;
 
-pub use crate::band::Band;
-pub use crate::contour::Contour;
-pub use crate::contourbuilder::ContourBuilder;
-pub use crate::error::{Error, ErrorKind, Result};
-pub use crate::isoringbuilder::contour_rings;
-pub use crate::line::Line;
+pub use crate::{
+    band::Band,
+    contour::Contour,
+    contourbuilder::ContourBuilder,
+    error::{Error, ErrorKind, Result},
+    isoringbuilder::contour_rings,
+    line::Line,
+};
+use num_traits::{Num, NumCast};
 
 #[cfg(test)]
 mod tests {
@@ -713,7 +716,7 @@ mod tests {
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
         ], &[0.5]).unwrap();
-        match res[0].to_geojson().geometry.unwrap().value {
+        match res[0].to_geojson().unwrap().geometry.unwrap().value {
             geojson::Value::MultiPolygon(p) => {
                 assert_eq!(
                     p,

@@ -1,7 +1,9 @@
 use contour::{ContourBuilder, Float};
 use geojson::{FeatureCollection, GeoJson};
-use std::fs::File;
-use std::io::{BufWriter, Write};
+use std::{
+    fs::File,
+    io::{BufWriter, Write},
+};
 
 fn main() {
     let pot_pop_fr = include_str!("../tests/fixtures/pot_pop_fr.json");
@@ -46,7 +48,8 @@ fn main() {
     let features = contours
         .iter()
         .map(|contour| contour.to_geojson())
-        .collect::<Vec<geojson::Feature>>();
+        .collect::<Result<Vec<geojson::Feature>, _>>()
+        .unwrap();
 
     let geojson_str = GeoJson::from(FeatureCollection {
         bbox: None,
@@ -91,7 +94,8 @@ fn main() {
     let features = contours
         .iter()
         .map(|contour| contour.to_geojson())
-        .collect::<Vec<geojson::Feature>>();
+        .collect::<Result<Vec<geojson::Feature>, _>>()
+        .unwrap();
 
     let geojson_str = GeoJson::from(FeatureCollection {
         bbox: None,
