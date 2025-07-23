@@ -55,7 +55,7 @@ impl Band {
     ///
     /// let geojson_string = contours[0].to_geojson().to_string();
     ///
-    /// assert_eq!(&geojson_string[0..27], r#"{"geometry":{"coordinates":"#);
+    /// assert_eq!(&geojson_string[0..27], r#"{"type":"Feature","geometry"#);
     /// ```
     pub fn to_geojson(&self) -> geojson::Feature {
         let mut properties = geojson::JsonObject::with_capacity(2);
