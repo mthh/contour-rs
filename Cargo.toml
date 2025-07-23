@@ -3,6 +3,7 @@ name = "contour"
 version = "0.13.1"
 authors = ["Matthieu Viry <matthieu.viry@cnrs.fr>"]
 edition = "2021"
+rust-version = "1.80"
 
 description = "Compute isorings and contour polygons (using marching squares algorithm)."
 repository = "https://github.com/mthh/contour-rs"
@@ -15,7 +16,6 @@ license = "MIT OR Apache-2.0"
 [dependencies]
 geojson = { version = ">=0.16, <=0.24", optional = true }
 geo-types = { version = "0.7" }
-lazy_static = "1.0"
 serde_json = { version = "^1.0", optional = true }
 rustc-hash = "2.1"
 slab = "0.4"

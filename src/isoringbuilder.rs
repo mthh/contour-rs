@@ -1,36 +1,34 @@
 use crate::error::{new_error, ErrorKind, Result};
 use crate::{Float, Pt, Ring};
-use lazy_static::lazy_static;
 use rustc_hash::FxHashMap;
 use slab::Slab;
+use std::sync::LazyLock;
 
-lazy_static! {
-    #[rustfmt::skip]
-    static ref CASES: Vec<Vec<Vec<Vec<Float>>>> = vec![
-        vec![],
-        vec![vec![vec![1.0, 1.5], vec![0.5, 1.0]]],
-        vec![vec![vec![1.5, 1.0], vec![1.0, 1.5]]],
-        vec![vec![vec![1.5, 1.0], vec![0.5, 1.0]]],
-        vec![vec![vec![1.0, 0.5], vec![1.5, 1.0]]],
-        vec![
-            vec![vec![1.0, 1.5], vec![0.5, 1.0]],
-            vec![vec![1.0, 0.5], vec![1.5, 1.0]]
-        ],
-        vec![vec![vec![1.0, 0.5], vec![1.0, 1.5]]],
-        vec![vec![vec![1.0, 0.5], vec![0.5, 1.0]]],
-        vec![vec![vec![0.5, 1.0], vec![1.0, 0.5]]],
-        vec![vec![vec![1.0, 1.5], vec![1.0, 0.5]]],
-        vec![
-            vec![vec![0.5, 1.0], vec![1.0, 0.5]],
-            vec![vec![1.5, 1.0], vec![1.0, 1.5]]
-        ],
-        vec![vec![vec![1.5, 1.0], vec![1.0, 0.5]]],
-        vec![vec![vec![0.5, 1.0], vec![1.5, 1.0]]],
-        vec![vec![vec![1.0, 1.5], vec![1.5, 1.0]]],
-        vec![vec![vec![0.5, 1.0], vec![1.0, 1.5]]],
-        vec![]
-    ];
-}
+#[rustfmt::skip]
+static CASES: LazyLock<Vec<Vec<Vec<Vec<Float>>>>> = LazyLock::new(|| vec![
+    vec![],
+    vec![vec![vec![1.0, 1.5], vec![0.5, 1.0]]],
+    vec![vec![vec![1.5, 1.0], vec![1.0, 1.5]]],
+    vec![vec![vec![1.5, 1.0], vec![0.5, 1.0]]],
+    vec![vec![vec![1.0, 0.5], vec![1.5, 1.0]]],
+    vec![
+        vec![vec![1.0, 1.5], vec![0.5, 1.0]],
+        vec![vec![1.0, 0.5], vec![1.5, 1.0]]
+    ],
+    vec![vec![vec![1.0, 0.5], vec![1.0, 1.5]]],
+    vec![vec![vec![1.0, 0.5], vec![0.5, 1.0]]],
+    vec![vec![vec![0.5, 1.0], vec![1.0, 0.5]]],
+    vec![vec![vec![1.0, 1.5], vec![1.0, 0.5]]],
+    vec![
+        vec![vec![0.5, 1.0], vec![1.0, 0.5]],
+        vec![vec![1.5, 1.0], vec![1.0, 1.5]]
+    ],
+    vec![vec![vec![1.5, 1.0], vec![1.0, 0.5]]],
+    vec![vec![vec![0.5, 1.0], vec![1.5, 1.0]]],
+    vec![vec![vec![1.0, 1.5], vec![1.5, 1.0]]],
+    vec![vec![vec![0.5, 1.0], vec![1.0, 1.5]]],
+    vec![]
+]);
 
 #[derive(Clone, Debug)]
 struct Fragment {
