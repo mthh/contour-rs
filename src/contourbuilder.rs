@@ -227,7 +227,7 @@ impl ContourBuilder {
     ///
     /// * `values` - The slice of values to be used.
     /// * `thresholds` - The slice of thresholds values to be used
-    ///                  (have to be equal to or greater than 2).
+    ///   (have to be equal to or greater than 2).
     pub fn isobands(&self, values: &[Float], thresholds: &[Float]) -> Result<Vec<Band>> {
         // We will compute rings as previously, but we will
         // iterate over the contours in pairs and use the paths from the lower threshold
