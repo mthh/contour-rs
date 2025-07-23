@@ -1,7 +1,8 @@
 extern crate contour;
 
 use contour::{contour_rings, ContourBuilder};
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
+use std::hint::black_box;
 
 #[rustfmt::skip]
 static VALUES: [f64; 110] = [
