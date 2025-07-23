@@ -14,15 +14,15 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 geojson = { version = ">=0.16, <=0.24", optional = true }
-geo-types= { version = "0.7" }
+geo-types = { version = "0.7" }
 lazy_static = "1.0"
 serde_json = { version = "^1.0", optional = true }
-rustc-hash = "1.0"
+rustc-hash = "2.1.1"
 slab = "0.4"
 
 [dev-dependencies]
 serde_json = "^1.0"
-criterion = { version = "0.5", features = ["html_reports"] }
+criterion = { version = "0.6", features = ["html_reports"] }
 
 [features]
 geojson = ["dep:geojson", "dep:serde_json"]
