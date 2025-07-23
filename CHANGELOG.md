@@ -1,5 +1,11 @@
 ## Changelog
 
+### Unreleased
+
+- POSSIBLY BREAKING: update MSRV to 1.80
+- Update some dependencies and dev-dependencies (thanks to @martinfrances107, see #22).
+- Replace `lazy_static` crate by `std::sync::LazyLock`.
+
 ### 0.13.1 (2024-04-30)
 
 - Fix bug introduced in 0.13.0 that caused the returned contours to be sometimes erroneous (fixes #18).
